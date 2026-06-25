@@ -8,6 +8,7 @@
 {% if models %}
 <p style="color: var(--dim); font-size: 0.85rem; margin-bottom: 0.5rem;">
   {{ models|length }} models found
+  {% if cached_at %}<span style="margin-left:1rem;">· cached at {{ cached_at }}</span>{% endif %}
 </p>
 <table>
   <thead>
@@ -28,6 +29,6 @@
 {% else %}
 <div class="empty">
   <div class="icon">&#128270;</div>
-  <p>No models discovered yet. Click "Discover Models" to query the API.</p>
+  <p>No models discovered yet. Add a provider in <a href="/settings">Settings</a>, then click "Discover Models".</p>
 </div>
 {% endif %}

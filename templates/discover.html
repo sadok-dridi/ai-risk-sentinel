@@ -4,7 +4,12 @@
 
 <h1>Model Discovery</h1>
 <p style="color: var(--dim); margin-bottom: 1rem;">
-  Queries configured API endpoints to discover available models. Models are cached for the session.
+  Queries configured API endpoints from Settings to discover available models.
+  {% if cached_at %}
+  <br>Last discovered: <strong>{{ cached_at }}</strong>
+  {% else %}
+  <br>No models cached. Configure a provider in <a href="/settings">Settings</a> first, then click Discover.
+  {% endif %}
 </p>
 
 <div style="margin-bottom: 1rem;">

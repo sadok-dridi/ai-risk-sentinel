@@ -216,6 +216,17 @@ def get_cached_models() -> list[dict]:
     return result
 
 
+def clear_model_cache():
+    with _conn() as c:
+        c.execute("DELETE FROM discovered_models")
+
+
+def get_cache_timestamp() -> str:
+    with _conn() as c:
+        row = c.execute("SELECT MAX(discovered_at) as ts FROM discovered_models").fetchone()
+    return row["ts"] if row and row["ts"] else ""
+
+
 # ── Settings ─────────────────────────────────────────────────────────────
 
 def get_setting(key: str, default: str = "") -> str:

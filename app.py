@@ -123,25 +123,52 @@ def dashboard(request: Request):
 @app.get("/discover", response_class=HTMLResponse)
 def discover_page(request: Request):
     cached = db.get_cached_models()
-    return render(request, "discover.html", models=cached, model_count=len(cached))
+    cached_at = db.get_cache_timestamp()
+    return render(request, "discover.html", models=cached, model_count=len(cached), cached_at=cached_at)
 
 
 @app.post("/discover", response_class=HTMLResponse)
 def discover_action(request: Request):
-    registry = _get_registry()
+    # Build registry from DB provider keys (preferred) or fall back to config.yaml
+    provider_keys = db.get_provider_keys()
+
+    if provider_keys:
+        # Build fresh registry from user-configured providers
+        config = _build_config_from_db(provider_keys)
+        registry = ModelRegistry.from_config(config)
+    else:
+        registry = _get_registry()
+
+    error_msg = ""
+    models_raw = []
     try:
         registry.discover_all(parallel=True)
     except Exception as e:
-        models_raw = []
         error_msg = str(e)
     else:
         models_raw = [{"id": m.id, "provider": m.provider, "owned_by": m.owned_by,
                        "context_window": m.context_window, "capabilities": m.capabilities}
                       for m in sorted(registry.models.values(), key=lambda x: x.id)]
-        error_msg = ""
+        # Cache the results
         db.save_models(models_raw)
 
-    return render(request, "partials/model_list.html", models=models_raw, error=error_msg)
+    return render(request, "partials/model_list.html", models=models_raw, error=error_msg,
+                  cached_at=db.get_cache_timestamp())
+
+
+def _build_config_from_db(provider_keys: list[dict]) -> dict:
+    """Build a config dict from saved provider keys (same format as config.yaml)."""
+    providers = []
+    for pk in provider_keys:
+        if pk.get("enabled", 1):
+            providers.append({
+                "name": pk["name"],
+                "type": pk.get("provider_type", "openai-compatible"),
+                "base_url": pk["base_url"],
+                "api_key": pk.get("api_key", ""),
+                "enabled": True,
+            })
+    return {"providers": providers, "attacks": {"core": [], "targeted": {}}, "output": {}}
 
 
 @app.get("/attacks", response_class=HTMLResponse)
@@ -384,9 +411,8 @@ def provider_save(provider_id: str, request: Request,
     if provider_id != "new":
         data["id"] = int(provider_id)
     save_id = db.save_provider_key(data)
-    if provider_id == "new":
-        # Reload the provider list
-        return _render_provider_list()
+    # Invalidate model cache — user changed provider config
+    db.clear_model_cache()
     return _render_provider_list()
 
 
@@ -413,6 +439,19 @@ def provider_test(provider_id: int, request: Request):
         data = resp.json()
         model_count = len(data.get("data", data if isinstance(data, list) else []))
         db.update_provider_test(provider_id, "ok", model_count)
+        # Clear cache — user will re-discover from this provider
+        db.clear_model_cache()
+        # Auto-discover models from this provider
+        try:
+            config = _build_config_from_db([p])
+            registry = ModelRegistry.from_config(config)
+            registry.discover_all(parallel=False)
+            models_raw = [{"id": m.id, "provider": m.provider, "owned_by": m.owned_by,
+                           "context_window": m.context_window, "capabilities": m.capabilities}
+                          for m in sorted(registry.models.values(), key=lambda x: x.id)]
+            db.save_models(models_raw)
+        except Exception:
+            pass  # Discovery will happen on next /discover click
         return HTMLResponse(
             f"<span style='color:var(--green);'>✓ Connected — {model_count} models found</span>"
             f"<script>setTimeout(function(){{ location.reload(); }}, 800);</script>"
