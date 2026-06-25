@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Settings — AI Risk Sentinel{% endblock %}
+{% block content %}
+
+<h1>Settings</h1>
+
+<!-- Provider Keys Section -->
+<div class="settings-section">
+  <h2>API Providers</h2>
+  <p class="dim" style="margin-bottom:1rem;">Configure API endpoints and keys. Providers are auto-loaded on startup.</p>
+
+  <div id="provider-list">
+    {% for p in providers %}
+    <div class="provider-card" id="prov-{{ p.id }}">
+      <div class="provider-header">
+        <strong>{{ p.name }}</strong>
+        <div style="display:flex; gap:0.4rem;">
+          {% if p.test_status %}
+          <span class="status-dot {% if p.test_status.startswith('ok') %}done{% else %}error{% endif %}" title="{{ p.test_status }}"></span>
+          <span style="font-size:0.75rem;color:var(--dim);">{{ p.test_status }}</span>
+          {% endif %}
+          <button class="btn sm" hx-get="/settings/provider/{{ p.id }}/form" hx-target="#prov-{{ p.id }}" hx-swap="outerHTML">Edit</button>
+          <button class="btn sm red" hx-delete="/settings/provider/{{ p.id }}" hx-target="#prov-{{ p.id }}" hx-swap="outerHTML">Delete</button>
+        </div>
+      </div>
+      <table style="font-size:0.8rem;">
+        <tr><td style="width:80px;color:var(--dim);">URL:</td><td><code>{{ p.base_url }}</code></td></tr>
+        <tr><td style="color:var(--dim);">Key:</td><td><code>{{ p.api_key[:12] }}{% if p.api_key|length > 12 %}...{% endif %}</code></td></tr>
+        <tr><td style="color:var(--dim);">Type:</td><td>{{ p.provider_type }}</td></tr>
+      </table>
+      <div style="margin-top:0.6rem;">
+        <button class="btn sm" hx-post="/settings/provider/{{ p.id }}/test" hx-target="#test-result-{{ p.id }}" hx-indicator="#test-spinner-{{ p.id }}">
+          Test Connection
+        </button>
+        <span id="test-spinner-{{ p.id }}" class="htmx-indicator dim">Testing...</span>
+        <span id="test-result-{{ p.id }}" style="font-size:0.8rem;"></span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <button class="btn" hx-get="/settings/provider/new" hx-target="#provider-list" hx-swap="beforeend" style="margin-top:0.5rem;">
+    + Add Provider
+  </button>
+</div>
+
+<!-- Verdict Engine Section -->
+<div class="settings-section">
+  <h2>Verdict Engine</h2>
+  <p class="dim" style="margin-bottom:1rem;">
+    Choose how responses are classified. The LLM judge uses deepseek-v4-flash-free for a second evaluation of each response.
+  </p>
+
+  <form hx-post="/settings/verdict-mode" hx-target="#verdict-saved" hx-swap="innerHTML">
+    <label class="toggle-option" style="margin-bottom:0.5rem;">
+      <input type="radio" name="verdict_mode" value="keyword" {% if verdict_mode == "keyword" %}checked{% endif %}
+             onchange="this.form.requestSubmit()">
+      <div>
+        <strong>Keyword matching</strong>
+        <p class="dim">Fast, free. Matches vulnerability/resistance indicator lists against the model's response.</p>
+      </div>
+    </label>
+
+    <label class="toggle-option">
+      <input type="radio" name="verdict_mode" value="llm_judge" {% if verdict_mode == "llm_judge" %}checked{% endif %}
+             onchange="this.form.requestSubmit()">
+      <div>
+        <strong>LLM Judge</strong> <span style="font-size:0.7rem;background:rgba(63,185,80,0.15);color:var(--green);padding:1px 6px;border-radius:3px;">free</span>
+        <p class="dim">More accurate. Sends each response to deepseek-v4-flash-free for evaluation. Adds ~1s per test. Falls back to keyword on error.</p>
+      </div>
+    </label>
+    <span id="verdict-saved" style="color:var(--green);font-size:0.8rem;"></span>
+  </form>
+</div>
+
+{% endblock %}

@@ -48,6 +48,8 @@ def init_db():
                 model_id TEXT NOT NULL,
                 provider TEXT NOT NULL DEFAULT '',
                 verdict TEXT NOT NULL DEFAULT 'error',
+                judge_verdict TEXT NOT NULL DEFAULT '',
+                judge_reason TEXT NOT NULL DEFAULT '',
                 prompt TEXT NOT NULL DEFAULT '',
                 response TEXT NOT NULL DEFAULT '',
                 matched_indicators TEXT NOT NULL DEFAULT '[]',
@@ -67,6 +69,22 @@ def init_db():
                 context_window INTEGER NOT NULL DEFAULT 0,
                 capabilities TEXT NOT NULL DEFAULT '[]',
                 discovered_at TEXT NOT NULL
+            );
+
+            CREATE TABLE IF NOT EXISTS settings (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL DEFAULT ''
+            );
+
+            CREATE TABLE IF NOT EXISTS provider_keys (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                base_url TEXT NOT NULL,
+                api_key TEXT NOT NULL DEFAULT '',
+                provider_type TEXT NOT NULL DEFAULT 'openai-compatible',
+                enabled INTEGER NOT NULL DEFAULT 1,
+                tested_at TEXT NOT NULL DEFAULT '',
+                test_status TEXT NOT NULL DEFAULT ''
             );
         """)
 
@@ -111,9 +129,10 @@ def save_result(run_id: str, result: dict):
         c.execute(
             """INSERT INTO run_results
                (run_id, attack_id, rsk_id, model_id, provider, verdict,
+                judge_verdict, judge_reason,
                 prompt, response, matched_indicators, error_message,
                 elapsed_ms, tokens_prompt, tokens_completion)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 run_id,
                 result.get("attack_id", ""),
@@ -121,6 +140,8 @@ def save_result(run_id: str, result: dict):
                 result.get("model_id", ""),
                 result.get("provider", ""),
                 result.get("verdict", "error"),
+                result.get("judge_verdict", ""),
+                result.get("judge_reason", ""),
                 result.get("prompt", ""),
                 result.get("response", ""),
                 json.dumps(result.get("matched_indicators", [])),
@@ -157,6 +178,8 @@ def get_run_results_as_result_objects(run_id: str) -> list:
             model_id=r["model_id"],
             provider=r["provider"],
             verdict=verdict,
+            judge_verdict=r.get("judge_verdict", ""),
+            judge_reason=r.get("judge_reason", ""),
             prompt=r["prompt"],
             response=r["response"],
             elapsed_ms=r["elapsed_ms"],
@@ -191,6 +214,59 @@ def get_cached_models() -> list[dict]:
         d["capabilities"] = json.loads(d.get("capabilities", "[]"))
         result.append(d)
     return result
+
+
+# ── Settings ─────────────────────────────────────────────────────────────
+
+def get_setting(key: str, default: str = "") -> str:
+    with _conn() as c:
+        row = c.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    return row["value"] if row else default
+
+
+def set_setting(key: str, value: str):
+    with _conn() as c:
+        c.execute("INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)", (key, value))
+
+
+# ── Provider Keys ────────────────────────────────────────────────────────
+
+def get_provider_keys() -> list[dict]:
+    with _conn() as c:
+        rows = c.execute("SELECT * FROM provider_keys ORDER BY id").fetchall()
+    return [dict(r) for r in rows]
+
+
+def save_provider_key(data: dict) -> int:
+    with _conn() as c:
+        if data.get("id"):
+            c.execute(
+                "UPDATE provider_keys SET name=?, base_url=?, api_key=?, provider_type=?, enabled=? WHERE id=?",
+                (data["name"], data["base_url"], data.get("api_key", ""),
+                 data.get("provider_type", "openai-compatible"), data.get("enabled", 1), data["id"]),
+            )
+            return data["id"]
+        else:
+            cur = c.execute(
+                "INSERT INTO provider_keys (name, base_url, api_key, provider_type, enabled) VALUES (?, ?, ?, ?, ?)",
+                (data["name"], data["base_url"], data.get("api_key", ""),
+                 data.get("provider_type", "openai-compatible"), data.get("enabled", 1)),
+            )
+            return cur.lastrowid
+
+
+def delete_provider_key(provider_id: int):
+    with _conn() as c:
+        c.execute("DELETE FROM provider_keys WHERE id = ?", (provider_id,))
+
+
+def update_provider_test(provider_id: int, status: str, model_count: int = 0):
+    now = time.strftime("%Y-%m-%dT%H:%M:%S")
+    with _conn() as c:
+        c.execute(
+            "UPDATE provider_keys SET tested_at = ?, test_status = ? WHERE id = ?",
+            (now, f"{status}:{model_count} models" if status == "ok" else status, provider_id),
+        )
 
 
 # ── Init on import ───────────────────────────────────────────────────────

@@ -148,6 +148,11 @@ def discover_action(request: Request):
 def attacks_page(request: Request):
     runner = _get_runner()
     cached = db.get_cached_models()
+    # Tag models that are currently live in the registry
+    registry = _get_registry()
+    live_ids = set(registry.models.keys())
+    for m in cached:
+        m["working"] = m["id"] in live_ids
     attacks = sorted(_attack_defs.values(), key=lambda a: a.attack_id)
     return render(request, "attacks.html", models=cached, attacks=attacks,
                   model_count=len(cached), attack_count=len(attacks))
@@ -190,6 +195,7 @@ def start_run(
     client: str = Form("Neuraluna"),
     models_json: str = Form("[]"),
     attacks_json: str = Form("[]"),
+    judge_mode: str = Form("false"),
 ):
     import json as _json
     model_ids = _json.loads(models_json)
@@ -208,6 +214,7 @@ def start_run(
         max_workers=4,
         timeout_per_attack=30,
         save_responses=False,
+        judge_mode=(judge_mode == "true"),
     )
     db.update_run(run_id, status="running", config_json=_json.dumps({
         "models": model_ids, "attacks": attack_ids, "client": client,
@@ -340,6 +347,120 @@ def progress_partial(run_id: str, request: Request):
     if not r:
         return HTMLResponse("<p>Run not found.</p>")
     return render(request, "partials/progress.html", run=r)
+
+
+# ── Settings ────────────────────────────────────────────────────────────
+
+@app.get("/settings", response_class=HTMLResponse)
+def settings_page(request: Request):
+    providers = db.get_provider_keys()
+    verdict_mode = db.get_setting("verdict_mode", "keyword")
+    return render(request, "settings.html", providers=providers, verdict_mode=verdict_mode)
+
+
+@app.get("/settings/provider/new", response_class=HTMLResponse)
+def provider_new_form(request: Request):
+    return env.get_template("partials/provider_form.html").render(p=None)
+
+
+@app.get("/settings/provider/{provider_id}/form", response_class=HTMLResponse)
+def provider_edit_form(provider_id: int, request: Request):
+    providers = db.get_provider_keys()
+    p = next((x for x in providers if x["id"] == provider_id), None)
+    if not p:
+        return HTMLResponse("<p>Provider not found.</p>", status_code=404)
+    return env.get_template("partials/provider_form.html").render(p=p)
+
+
+@app.post("/settings/provider/{provider_id}", response_class=HTMLResponse)
+def provider_save(provider_id: str, request: Request,
+                   name: str = Form(...), base_url: str = Form(...),
+                   api_key: str = Form(""), provider_type: str = Form("openai-compatible"),
+                   provider_id_hidden: str = Form("", alias="provider_id")):
+    data = {
+        "name": name, "base_url": base_url, "api_key": api_key,
+        "provider_type": provider_type,
+    }
+    if provider_id != "new":
+        data["id"] = int(provider_id)
+    save_id = db.save_provider_key(data)
+    if provider_id == "new":
+        # Reload the provider list
+        return _render_provider_list()
+    return _render_provider_list()
+
+
+@app.delete("/settings/provider/{provider_id}", response_class=HTMLResponse)
+def provider_delete(provider_id: int):
+    db.delete_provider_key(provider_id)
+    return _render_provider_list()
+
+
+@app.post("/settings/provider/{provider_id}/test", response_class=HTMLResponse)
+def provider_test(provider_id: int, request: Request):
+    """Test a provider connection by calling /models endpoint."""
+    providers = db.get_provider_keys()
+    p = next((x for x in providers if x["id"] == provider_id), None)
+    if not p:
+        return HTMLResponse("<span style='color:var(--red);'>Provider not found.</span>")
+
+    import httpx
+    try:
+        resp = httpx.get(f"{p['base_url']}/models",
+                         headers={"Authorization": f"Bearer {p['api_key']}"},
+                         timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        model_count = len(data.get("data", data if isinstance(data, list) else []))
+        db.update_provider_test(provider_id, "ok", model_count)
+        return HTMLResponse(
+            f"<span style='color:var(--green);'>✓ Connected — {model_count} models found</span>"
+            f"<script>setTimeout(function(){{ location.reload(); }}, 800);</script>"
+        )
+    except Exception as e:
+        db.update_provider_test(provider_id, "failed")
+        return HTMLResponse(f"<span style='color:var(--red);'>✗ Failed: {str(e)[:100]}</span>")
+
+
+@app.post("/settings/verdict-mode", response_class=HTMLResponse)
+def settings_verdict_mode(verdict_mode: str = Form(...)):
+    db.set_setting("verdict_mode", verdict_mode)
+    return HTMLResponse(f"<span style='color:var(--green);'>✓ Saved — {verdict_mode}</span>")
+
+
+def _render_provider_list() -> HTMLResponse:
+    """Render just the provider-list div for HTMX swaps."""
+    providers = db.get_provider_keys()
+    html = '<div id="provider-list">'
+    for p in providers:
+        test_info = ""
+        if p.get("test_status"):
+            dot = "done" if p["test_status"].startswith("ok") else "error"
+            test_info = f'<span class="status-dot {dot}" title="{p["test_status"]}"></span><span style="font-size:0.75rem;color:var(--dim);">{p["test_status"]}</span>'
+        masked_key = p["api_key"][:12] + "..." if len(p.get("api_key","")) > 12 else p.get("api_key","")
+        html += f'''
+        <div class="provider-card" id="prov-{p["id"]}">
+          <div class="provider-header">
+            <strong>{p["name"]}</strong>
+            <div style="display:flex;gap:0.4rem;">
+              {test_info}
+              <button class="btn sm" hx-get="/settings/provider/{p["id"]}/form" hx-target="#prov-{p["id"]}" hx-swap="outerHTML">Edit</button>
+              <button class="btn sm red" hx-delete="/settings/provider/{p["id"]}" hx-target="#prov-{p["id"]}" hx-swap="outerHTML">Delete</button>
+            </div>
+          </div>
+          <table style="font-size:0.8rem;">
+            <tr><td style="width:80px;color:var(--dim);">URL:</td><td><code>{p["base_url"]}</code></td></tr>
+            <tr><td style="color:var(--dim);">Key:</td><td><code>{masked_key}</code></td></tr>
+            <tr><td style="color:var(--dim);">Type:</td><td>{p["provider_type"]}</td></tr>
+          </table>
+          <div style="margin-top:0.6rem;">
+            <button class="btn sm" hx-post="/settings/provider/{p["id"]}/test" hx-target="#test-result-{p["id"]}" hx-indicator="#test-spinner-{p["id"]}">Test Connection</button>
+            <span id="test-spinner-{p["id"]}" class="htmx-indicator dim">Testing...</span>
+            <span id="test-result-{p["id"]}" style="font-size:0.8rem;"></span>
+          </div>
+        </div>'''
+    html += '</div>'
+    return HTMLResponse(html)
 
 
 # ── Entry ────────────────────────────────────────────────────────────────

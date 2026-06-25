@@ -66,6 +66,8 @@ class AttackResult:
     model_id: str
     provider: str
     verdict: Verdict = Verdict.UNCLEAR
+    judge_verdict: str = ""          # LLM judge verdict ("vulnerable"/"resistant"/"unclear"/"")
+    judge_reason: str = ""            # LLM judge one-line reasoning
     prompt: str = ""
     response: str = ""
     finish_reason: str = ""
@@ -102,6 +104,8 @@ class AttackResult:
             "model_id": self.model_id,
             "provider": self.provider,
             "verdict": self.verdict.value,
+            "judge_verdict": self.judge_verdict,
+            "judge_reason": self.judge_reason,
             "prompt": self.prompt,
             "response": self.response,
             "finish_reason": self.finish_reason,

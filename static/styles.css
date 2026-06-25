@@ -207,3 +207,108 @@ footer {
   animation: fadeIn 0.3s;
 }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Wizard ─────────────────────────────────────── */
+.wizard-header { display: flex; align-items: center; gap: 0; margin-bottom: 1.5rem; }
+.wizard-step {
+  padding: 0.6rem 1.2rem; border-radius: 6px;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--dim); font-size: 0.85rem; font-weight: 500;
+  display: flex; align-items: center; gap: 0.5rem;
+  transition: all 0.2s;
+}
+.wizard-step .step-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--border); color: var(--dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700;
+}
+.wizard-step.active {
+  border-color: var(--accent); color: var(--text);
+}
+.wizard-step.active .step-num { background: var(--accent); color: #fff; }
+.wizard-arrow { color: var(--dim); margin: 0 0.5rem; font-size: 1.2rem; }
+
+.wizard-panel { display: none; }
+.wizard-panel.active { display: block; }
+
+.wizard-nav { display: flex; justify-content: space-between; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+
+/* ── Model Grid ─────────────────────────────────── */
+.model-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 0.5rem; margin: 0.8rem 0; }
+.model-card {
+  display: flex; align-items: center; gap: 0.6rem;
+  padding: 0.6rem 0.8rem; border: 1px solid var(--border); border-radius: 6px;
+  cursor: pointer; transition: all 0.15s;
+  background: var(--surface);
+}
+.model-card:hover { border-color: var(--accent); }
+.model-card input[type="checkbox"] { accent-color: var(--accent); }
+.model-card-body { flex: 1; min-width: 0; }
+.model-card-body .model-name { display: block; font-size: 0.85rem; font-weight: 600; }
+.model-card-body .model-owner { display: block; font-size: 0.7rem; color: var(--dim); }
+.model-card.working { border-color: var(--green); background: rgba(63,185,80,0.05); }
+
+/* ── Attack List ─────────────────────────────────── */
+.attack-list { display: flex; flex-direction: column; gap: 0.4rem; margin: 0.8rem 0; }
+.attack-card-select {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  padding: 0.7rem 0.9rem; border: 1px solid var(--border); border-radius: 6px;
+  cursor: pointer; transition: all 0.15s; background: var(--surface);
+}
+.attack-card-select:hover { border-color: var(--accent); }
+.attack-card-select input[type="checkbox"] { margin-top: 2px; accent-color: var(--accent); }
+.attack-card-body { flex: 1; }
+.attack-card-top { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; }
+.attack-name { font-weight: 600; font-size: 0.85rem; }
+.attack-desc { font-size: 0.75rem; color: var(--dim); margin: 0; }
+.badge.rsk { background: rgba(88,166,255,0.15); color: var(--accent); font-size: 0.65rem; padding: 1px 6px; border-radius: 3px; }
+.badge.severity-extreme { background: rgba(248,81,73,0.15); color: var(--red); }
+.badge.severity-eleve { background: rgba(219,109,40,0.15); color: var(--orange); }
+.badge.severity-moyen { background: rgba(210,153,29,0.15); color: var(--yellow); }
+.badge.severity-faible { background: rgba(139,148,158,0.15); color: var(--dim); }
+
+/* ── Card header ─────────────────────────────────── */
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.card-header h2 { margin: 0; border: none; padding: 0; }
+
+/* ── Review ──────────────────────────────────────── */
+.review-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; margin: 1rem 0; }
+.review-box {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 1rem; text-align: center;
+}
+.review-box .review-label { font-size: 0.75rem; color: var(--dim); text-transform: uppercase; }
+.review-box .review-value { font-size: 1.8rem; font-weight: 700; color: var(--accent); margin-top: 0.3rem; }
+
+/* ── Toggle option ───────────────────────────────── */
+.toggle-option {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.7rem 1rem; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); font-size: 0.85rem;
+}
+.toggle-option input[type="checkbox"] { accent-color: var(--accent); transform: scale(1.2); }
+.toggle-option:hover { border-color: var(--accent); }
+
+/* ── Settings ────────────────────────────────────── */
+.settings-section { margin-bottom: 2rem; }
+.settings-section h2 { margin-bottom: 0.8rem; }
+.provider-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 1.2rem; margin-bottom: 0.8rem;
+}
+.provider-card .provider-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.8rem;
+}
+.form-group { margin-bottom: 0.8rem; }
+.form-group label { display: block; font-size: 0.8rem; color: var(--dim); margin-bottom: 0.3rem; }
+.form-group input {
+  width: 100%; padding: 0.5rem 0.7rem; border: 1px solid var(--border);
+  border-radius: 4px; background: var(--bg); color: var(--text);
+  font-size: 0.85rem; font-family: monospace;
+}
+.form-group input:focus { outline: none; border-color: var(--accent); }
+
+/* ── Helper ──────────────────────────────────────── */
+.dim { color: var(--dim); font-size: 0.85rem; }

@@ -1,0 +1,34 @@
+<!-- Provider edit/new form (HTMX partial) -->
+<div class="provider-card" id="prov-{{ p.id if p else 'new' }}">
+  <div class="provider-header">
+    <strong>{% if p %}Edit Provider{% else %}New Provider{% endif %}</strong>
+  </div>
+
+  <form hx-post="/settings/provider/{% if p %}{{ p.id }}{% else %}new{% endif %}"
+        hx-target="#provider-list" hx-swap="outerHTML">
+    <input type="hidden" name="provider_id" value="{{ p.id if p else '' }}">
+
+    <div class="form-group">
+      <label>Provider Name</label>
+      <input type="text" name="name" value="{{ p.name if p else '' }}" placeholder="e.g. OpenCode Zen" required>
+    </div>
+
+    <div class="form-group">
+      <label>Base URL</label>
+      <input type="text" name="base_url" value="{{ p.base_url if p else '' }}" placeholder="https://opencode.ai/zen/v1" required>
+    </div>
+
+    <div class="form-group">
+      <label>API Key</label>
+      <input type="password" name="api_key" value="{{ p.api_key if p else '' }}" placeholder="sk-...">
+    </div>
+
+    <div class="form-group">
+      <label>Provider Type</label>
+      <input type="text" name="provider_type" value="{{ p.provider_type if p else 'openai-compatible' }}" placeholder="openai-compatible">
+    </div>
+
+    <button type="submit" class="btn primary">Save</button>
+    <button type="button" class="btn" onclick="location.reload()">Cancel</button>
+  </form>
+</div>

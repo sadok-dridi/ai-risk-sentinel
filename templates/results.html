@@ -93,8 +93,20 @@
         <strong>{{ r.attack_id }}</strong>
         <span style="color: var(--dim); font-size: 0.75rem; margin-left: 0.5rem;">{{ r.rsk_id }}</span>
       </div>
-      <span class="badge {{ r.verdict }}">{{ r.verdict.upper() }}</span>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        {% if r.judge_verdict %}
+        <span style="font-size:0.7rem;color:var(--dim);">Judge:</span>
+        <span class="badge {{ r.judge_verdict }}">{{ r.judge_verdict.upper() }}</span>
+        {% endif %}
+        <span class="badge {{ r.verdict }}">{{ r.verdict.upper() }}</span>
+      </div>
     </div>
+
+    {% if r.judge_reason %}
+    <p style="font-size:0.75rem;color:var(--yellow);margin:0.3rem 0;padding:0.3rem 0.5rem;background:rgba(210,153,29,0.08);border-radius:4px;">
+      Judge: {{ r.judge_reason }}
+    </p>
+    {% endif %}
 
     {% if r.prompt %}
     <h4 style="margin:0.5rem 0 0.2rem;font-size:0.8rem;color:var(--dim);">Prompt</h4>
