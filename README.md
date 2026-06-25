@@ -51,7 +51,7 @@ The tool sends attack prompts to multiple AI models simultaneously, classifies r
 │  Jinja2 templates → server-rendered HTML                  │
 │  SSE streaming → live attack progress                     │
 └──────┬────────────────────────────────────────────────────┘
-       │              │                │
+       │               │                │
 ┌──────▼───┐   ┌───────▼──────┐   ┌─────▼───────────────┐
 │ SQLite   │   │ AttackRunner │   │ LLM Provider API    │
 │ (runs,   │   │ (7 attacks × │   │ /v1/chat/completions│
