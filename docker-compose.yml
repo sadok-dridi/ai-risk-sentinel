@@ -1,0 +1,14 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8099:8099"
+    env_file:
+      - ./demo/.env
+    volumes:
+      - ./demo2/output:/app/demo2/output
+      - ./demo2/demo2.db:/app/demo2/demo2.db
+      - ./demo/config.yaml:/app/demo/config.yaml:ro
+    restart: unless-stopped

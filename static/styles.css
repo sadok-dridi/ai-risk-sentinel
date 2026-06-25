@@ -1,0 +1,209 @@
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --dim: #8b949e;
+  --accent: #58a6ff;
+  --green: #3fb950;
+  --red: #f85149;
+  --yellow: #d2991d;
+  --orange: #db6d28;
+  --purple: #a371f7;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* ── Header ─────────────────────────────────────── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0.6rem 1.5rem;
+  display: flex; align-items: center; gap: 2rem;
+  position: sticky; top: 0; z-index: 10;
+}
+header .logo {
+  font-weight: 700; font-size: 1rem; color: var(--accent);
+}
+header nav { display: flex; gap: 1.5rem; }
+header nav a {
+  color: var(--dim); font-size: 0.85rem; font-weight: 500;
+  transition: color 0.15s;
+}
+header nav a:hover, header nav a.active { color: var(--text); text-decoration: none; }
+
+/* ── Main content ────────────────────────────────── */
+main { max-width: 1100px; margin: 0 auto; padding: 1.5rem; }
+
+h1 { font-size: 1.5rem; margin-bottom: 1rem; }
+h2 { font-size: 1.15rem; margin: 1.5rem 0 0.8rem; color: var(--text); }
+h3 { font-size: 1rem; margin: 1rem 0 0.5rem; }
+
+/* ── Cards ───────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Stat Grid ───────────────────────────────────── */
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.8rem; margin: 1rem 0; }
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem; text-align: center;
+}
+.stat-card .number { font-size: 2rem; font-weight: 700; }
+.stat-card .label { font-size: 0.75rem; color: var(--dim); text-transform: uppercase; margin-top: 0.2rem; }
+.stat-card .number.green { color: var(--green); }
+.stat-card .number.red { color: var(--red); }
+.stat-card .number.yellow { color: var(--yellow); }
+.stat-card .number.dim { color: var(--dim); }
+
+/* ── Buttons ─────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text);
+  font-size: 0.85rem; font-weight: 500; cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn.primary:hover { opacity: 0.9; }
+.btn.green { background: var(--green); color: #fff; border-color: var(--green); }
+.btn.red { background: var(--red); color: #fff; border-color: var(--red); }
+.btn.sm { padding: 0.15rem 0.5rem; font-size: 0.7rem; }
+
+/* ── Tables ──────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; margin: 0.5rem 0; font-size: 0.85rem; }
+th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid var(--border); }
+th { color: var(--dim); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+tr:hover { background: rgba(255,255,255,0.02); }
+
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 3px;
+  font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+}
+.badge.vulnerable { background: rgba(248,81,73,0.15); color: var(--red); }
+.badge.resistant { background: rgba(63,185,80,0.15); color: var(--green); }
+.badge.unclear { background: rgba(210,153,29,0.15); color: var(--yellow); }
+.badge.error { background: rgba(139,148,158,0.15); color: var(--dim); }
+
+/* ── Progress bar ────────────────────────────────── */
+.progress-bar {
+  height: 8px; background: var(--border); border-radius: 4px;
+  overflow: hidden; margin: 0.5rem 0;
+}
+.progress-fill {
+  height: 100%; background: var(--accent);
+  transition: width 0.3s ease;
+}
+.progress-fill.done { background: var(--green); }
+
+/* ── Matrix ──────────────────────────────────────── */
+.matrix-wrap { overflow-x: auto; }
+.matrix-wrap table { font-size: 0.78rem; }
+.matrix-wrap th:first-child, .matrix-wrap td:first-child {
+  position: sticky; left: 0; background: var(--surface); z-index: 1;
+}
+.matrix-wrap th { white-space: nowrap; }
+.matrix-wrap td { text-align: center; min-width: 50px; }
+.matrix-wrap td.vulnerable { background: rgba(248,81,73,0.2); color: var(--red); font-weight: 700; }
+.matrix-wrap td.resistant { background: rgba(63,185,80,0.2); color: var(--green); font-weight: 700; }
+.matrix-wrap td.unclear { background: rgba(210,153,29,0.15); color: var(--yellow); }
+.matrix-wrap td.error { background: rgba(139,148,158,0.1); color: var(--dim); }
+
+/* ── Checkbox list ───────────────────────────────── */
+.checklist { list-style: none; }
+.checklist li { padding: 4px 0; }
+.checklist label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; }
+.checklist input[type="checkbox"] { accent-color: var(--accent); }
+
+/* ── Live run feed ───────────────────────────────── */
+.run-feed {
+  max-height: 400px; overflow-y: auto;
+  border: 1px solid var(--border); border-radius: 6px;
+  padding: 0.5rem; font-family: monospace; font-size: 0.75rem;
+  background: var(--bg);
+}
+.run-feed .entry { padding: 2px 6px; }
+.run-feed .entry.vuln { color: var(--red); }
+.run-feed .entry.safe { color: var(--green); }
+.run-feed .entry.err { color: var(--dim); }
+
+/* ── Result card ─────────────────────────────────── */
+.result-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 1rem; margin: 0.8rem 0;
+}
+.result-card .header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 0.5rem;
+}
+.prompt-box {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 4px; padding: 0.6rem; font-family: monospace;
+  font-size: 0.8rem; white-space: pre-wrap; max-height: 200px; overflow-y: auto;
+  margin: 0.5rem 0;
+}
+
+/* ── Filter bar ──────────────────────────────────── */
+.filter-bar {
+  display: flex; gap: 0.4rem; margin: 0.8rem 0; flex-wrap: wrap;
+}
+
+/* ── Tabs ────────────────────────────────────────── */
+.tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 1rem; }
+.tab {
+  padding: 0.5rem 1rem; cursor: pointer; border: none; background: none;
+  color: var(--dim); font-weight: 500; font-size: 0.85rem;
+  border-bottom: 2px solid transparent;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Status dot ──────────────────────────────────── */
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-dot.pending { background: var(--yellow); }
+.status-dot.running { background: var(--accent); animation: pulse 1s infinite; }
+.status-dot.done { background: var(--green); }
+.status-dot.error { background: var(--red); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ── Empty state ─────────────────────────────────── */
+.empty { text-align: center; padding: 3rem; color: var(--dim); }
+.empty .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+/* ── Footer ──────────────────────────────────────── */
+footer {
+  text-align: center; padding: 1.5rem; color: var(--dim);
+  font-size: 0.75rem; border-top: 1px solid var(--border);
+  margin-top: 3rem;
+}
+
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+
+/* ── Toast ───────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 1rem; right: 1rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 6px; padding: 0.8rem 1.2rem; z-index: 100;
+  animation: fadeIn 0.3s;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

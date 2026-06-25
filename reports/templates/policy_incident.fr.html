@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Procédure de Réponse aux Incidents IA — {{ client }}</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  @media print { body { font-size: 10pt; } .no-print { display: none; } .page-break { page-break-before: always; } }
+
+  :root {
+    --tw-dark: #1a1a2e; --tw-accent: #16213e; --tw-blue: #0f4c81; --tw-teal: #0d7377;
+    --danger: #d32f2f; --safe: #2e7d32; --warn: #f57c00; --gray: #757575;
+    --bg-card: #f5f7fa; --border: #e0e0e0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #212121; background: #fff; line-height: 1.6;
+  }
+
+  .cover {
+    background: linear-gradient(135deg, var(--tw-dark) 0%, var(--tw-accent) 100%);
+    color: #fff; min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 4rem; page-break-after: always;
+  }
+  .cover h1 { font-size: 2rem; font-weight: 300; margin-bottom: 0.5rem; }
+  .cover h2 { font-size: 1rem; font-weight: 400; opacity: 0.8; margin-bottom: 2rem; }
+  .cover .meta { margin-top: 3rem; font-size: 0.9rem; opacity: 0.75; line-height: 1.8; }
+  .cover .meta strong { font-weight: 600; opacity: 1; }
+  .cover .ref { margin-top: 2rem; padding: 0.8rem 1.2rem; border-left: 3px solid var(--tw-teal); background: rgba(255,255,255,0.08); font-size: 0.85rem; }
+  .logo-placeholder { font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; margin-bottom: 3rem; }
+
+  .content { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+  h2 { color: var(--tw-dark); font-size: 1.5rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--tw-teal); }
+  h3 { color: var(--tw-accent); font-size: 1.1rem; margin: 1.5rem 0 0.6rem; }
+
+  .step { background: var(--bg-card); border-left: 4px solid var(--tw-blue); padding: 1.2rem 1.5rem; margin: 1rem 0; border-radius: 0 6px 6px 0; page-break-inside: avoid; }
+  .step .step-num { color: var(--tw-blue); font-weight: 700; font-size: 1.1rem; margin-bottom: 0.4rem; }
+  .step .step-title { font-weight: 600; color: var(--tw-dark); }
+
+  .incident-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+  .incident-table th { background: var(--tw-dark); color: #fff; padding: 8px 12px; text-align: left; font-weight: 500; font-size: 0.8rem; }
+  .incident-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .incident-table tr:nth-child(even) { background: #fafafa; }
+
+  .alert-box { background: #fff3e0; border-left: 4px solid var(--warn); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .alert-box.critical { background: #ffebee; border-left-color: var(--danger); }
+  .alert-box.cnil { background: #e8eaf6; border-left-color: #283593; }
+
+  .contact-card { display: inline-block; background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem; margin: 0.5rem; min-width: 200px; }
+  .contact-card .role { font-weight: 700; color: var(--tw-dark); }
+  .contact-card .name { color: var(--gray); font-size: 0.85rem; }
+
+  .footer { text-align: center; padding: 2rem; color: var(--gray); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 3rem; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="logo-placeholder">AI RISK SENTINEL</div>
+  <h1>Procédure de Réponse<br>aux Incidents IA</h1>
+  <h2>Détection, confinement et remédiation des incidents liés à l'IA</h2>
+
+  <div class="ref">Référence : ISO 42001 §8.2 — Appréciation des Risques | §10.1 — Non-conformité et actions correctives</div>
+
+  <div class="meta">
+    <strong>Client :</strong> {{ client }}<br>
+    <strong>Date :</strong> {{ date }}<br>
+    <strong>Version :</strong> 1.0<br>
+    <strong>Classification :</strong> Confidentiel — Usage interne
+  </div>
+</div>
+
+<div class="content">
+
+<!-- 1. Définition -->
+<h2>1. Définition d'un Incident IA</h2>
+<p>Un incident IA est tout événement impliquant un outil d'intelligence artificielle qui :</p>
+<ul style="margin:0.5rem 0 1rem 2rem; line-height:2;">
+  <li>Provoque une <strong>divulgation non autorisée</strong> de données (prompt leakage, réponse contaminée)</li>
+  <li>Génère un <strong>contenu préjudiciable</strong> (toxique, discriminatoire, frauduleux)</li>
+  <li>Résulte d'une <strong>manipulation malveillante</strong> (injection, jailbreak, empoisonnement)</li>
+  <li>Produit une <strong>décision erronée</strong> ayant un impact métier (hallucination critique)</li>
+  <li>Constitue une <strong>violation de données personnelles</strong> au sens du RGPD</li>
+</ul>
+
+<div class="alert-box critical">
+  <strong>Criticité :</strong> Le taux de vulnérabilité mesuré est de <strong>{{ vulnerability_rate }}%</strong>. La probabilité d'incident est réelle. Cette procédure doit être connue de tous les utilisateurs d'outils IA.
+</div>
+
+<!-- 2. Typologie -->
+<h2>2. Typologie des Incidents</h2>
+<p>Les incidents sont classés selon leur nature. Chaque type est associé aux scénarios de risque du registre ISO 42001 :</p>
+
+{% if incident_types %}
+<table class="incident-table">
+  <thead>
+    <tr><th>Type</th><th>Risques associés</th><th>Scénarios</th></tr>
+  </thead>
+  <tbody>
+    {% for it in incident_types %}
+    <tr>
+      <td><strong>{{ it.label }}</strong></td>
+      <td>{{ it.description[:120] }}</td>
+      <td>{{ it.risks|join(', ') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Aucune définition d'attaque chargée. Importer les définitions pour générer la typologie.</p>
+{% endif %}
+
+<!-- 3. Procédure -->
+<div class="page-break"></div>
+<h2>3. Procédure Pas-à-Pas</h2>
+
+<div class="step">
+  <div class="step-num">Étape 1 — DÉTECTION</div>
+  <div class="step-title">Identifier et qualifier l'incident</div>
+  <ul style="margin-top:0.5rem; padding-left:1.5rem;">
+    <li><strong>Signalement :</strong> Tout utilisateur témoin d'un comportement anormal de l'IA le signale immédiatement au RSSI via le canal dédié (email incident-ia@ ou ticket)</li>
+    <li><strong>Détection automatique :</strong> Les logs de prompts/réponses sont analysés. Les alertes DLP (détection de secrets, patterns RGPD) déclenchent un ticket automatique</li>
+    <li><strong>Qualification :</strong> Le RSSI détermine en moins d'1 heure si l'événement est un incident (impact avéré) ou un événement (tentative bloquée)</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-num">Étape 2 — CONFINEMENT</div>
+  <div class="step-title">Isoler le périmètre et limiter la propagation</div>
+  <ul style="margin-top:0.5rem; padding-left:1.5rem;">
+    <li>Révoquer immédiatement l'accès de l'utilisateur à l'outil IA concerné</li>
+    <li>Si fuite de données : identifier toutes les conversations contenant les données exposées</li>
+    <li>Si injection/jailbreak : désactiver temporairement le modèle concerné</li>
+    <li>Préserver les logs (prompts, réponses, timestamps) pour investigation</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-num">Étape 3 — INVESTIGATION</div>
+  <div class="step-title">Analyser les causes et l'étendue</div>
+  <ul style="margin-top:0.5rem; padding-left:1.5rem;">
+    <li>Reconstituer la chronologie : prompt d'origine, réponse du modèle, actions subséquentes</li>
+    <li>Déterminer le vecteur : erreur utilisateur, attaque délibérée, défaillance du modèle</li>
+    <li>Évaluer le scope : quelles données ont été exposées ? À quel récepteur ?</li>
+    <li>Classifier la sévérité : Mineure, Significative, Majeure, Critique</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-num">Étape 4 — REMÉDIATION</div>
+  <div class="step-title">Corriger et renforcer</div>
+  <ul style="margin-top:0.5rem; padding-left:1.5rem;">
+    <li>Appliquer le correctif immédiat : renforcer le prompt système, activer un filtre, bloquer un pattern</li>
+    <li>Mettre à jour le registre des risques (PTR) avec les nouvelles mesures</li>
+    <li>Tester la correction : relancer le scénario d'attaque en environnement contrôlé</li>
+    <li>Si nécessaire, déployer une contre-mesure globale (ex : DLP renforcé, quota réduit)</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-num">Étape 5 — NOTIFICATION</div>
+  <div class="step-title">Informer les parties prenantes</div>
+  <ul style="margin-top:0.5rem; padding-left:1.5rem;">
+    {% if has_personal_data %}
+    <li><strong>CNIL :</strong> Notification obligatoire sous <strong>72 heures</strong> si des données personnelles sont compromises (Article 33 RGPD)</li>
+    {% endif %}
+    <li><strong>Personnes concernées :</strong> Si risque élevé pour les droits et libertés, notification individuelle</li>
+    <li><strong>Direction :</strong> Compte-rendu au CODIR dans les 24h pour les incidents majeurs/critiques</li>
+    <li><strong>Fournisseur IA :</strong> Si l'incident est lié au modèle, notification au fournisseur</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-num">Étape 6 — POST-MORTEM</div>
+  <div class="step-title">Tirer les leçons et améliorer</div>
+  <ul style="margin-top:0.5rem; padding-left:1.5rem;">
+    <li>Rédiger un rapport d'incident dans les 5 jours ouvrés</li>
+    <li>Identifier les causes racines (5 Why)</li>
+    <li>Mettre à jour la politique d'usage, les formations et le PTR</li>
+    <li>Présenter les conclusions en revue RSSI trimestrielle</li>
+  </ul>
+</div>
+
+<!-- 4. Contacts -->
+<div class="page-break"></div>
+<h2>4. Contacts</h2>
+
+<div>
+  <div class="contact-card">
+    <div class="role">{{ contacts.dsi }}</div>
+    <div class="name">[À compléter]</div>
+  </div>
+  <div class="contact-card">
+    <div class="role">{{ contacts.rssi }}</div>
+    <div class="name">[À compléter]</div>
+  </div>
+  {% if contacts.dpo %}
+  <div class="contact-card">
+    <div class="role">{{ contacts.dpo }}</div>
+    <div class="name">[À compléter]</div>
+  </div>
+  {% endif %}
+</div>
+
+<p style="margin-top:1rem; color:var(--gray); font-size:0.85rem;">
+  Canal de signalement : <strong>incident-ia@{{ client|lower|replace(' ', '-') }}.com</strong>
+</p>
+
+<!-- 5. Modèle fiche incident -->
+<h2>5. Annexe — Fiche de Signalement d'Incident IA</h2>
+
+<table class="incident-table">
+  <thead><tr><th style="width:25%;">Champ</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Date/Heure</strong></td><td>JJ/MM/AAAA HH:MM</td></tr>
+    <tr><td><strong>Déclarant</strong></td><td>Nom, service, email</td></tr>
+    <tr><td><strong>Outil IA</strong></td><td>Nom du modèle / fournisseur</td></tr>
+    <tr><td><strong>Type d'incident</strong></td><td>{% for it in incident_types %}{{ it.label }}{% if not loop.last %} / {% endif %}{% endfor %}</td></tr>
+    <tr><td><strong>Description</strong></td><td>Prompt saisi, réponse reçue, contexte</td></tr>
+    <tr><td><strong>Données exposées</strong></td><td>Nature et volume des données potentiellement compromises</td></tr>
+    <tr><td><strong>Sévérité estimée</strong></td><td>Mineure / Significative / Majeure / Critique</td></tr>
+    <tr><td><strong>Actions immédiates</strong></td><td>Mesures prises dans les premières minutes</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<div class="footer">
+  <p>Procédure de Réponse aux Incidents IA — {{ client }}</p>
+  <p>Référence : ISO 42001:2023 §10.1 — Non-conformité et actions correctives</p>
+</div>
+
+</body>
+</html>

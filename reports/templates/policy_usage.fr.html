@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique d'Usage de l'IA — {{ client }}</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  @media print { body { font-size: 10pt; } .no-print { display: none; } .page-break { page-break-before: always; } }
+
+  :root {
+    --tw-dark: #1a1a2e; --tw-accent: #16213e; --tw-blue: #0f4c81; --tw-teal: #0d7377;
+    --danger: #d32f2f; --safe: #2e7d32; --warn: #f57c00; --gray: #757575;
+    --bg-card: #f5f7fa; --border: #e0e0e0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #212121; background: #fff; line-height: 1.6;
+  }
+
+  .cover {
+    background: linear-gradient(135deg, var(--tw-dark) 0%, var(--tw-accent) 100%);
+    color: #fff; min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 4rem; page-break-after: always;
+  }
+  .cover h1 { font-size: 2.2rem; font-weight: 300; margin-bottom: 0.5rem; }
+  .cover h2 { font-size: 1rem; font-weight: 400; opacity: 0.8; margin-bottom: 2rem; }
+  .cover .meta { margin-top: 3rem; font-size: 0.9rem; opacity: 0.75; line-height: 1.8; }
+  .cover .meta strong { font-weight: 600; opacity: 1; }
+  .cover .ref { margin-top: 2rem; padding: 0.8rem 1.2rem; border-left: 3px solid var(--tw-teal); background: rgba(255,255,255,0.08); font-size: 0.85rem; }
+  .logo-placeholder { font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; margin-bottom: 3rem; }
+
+  .content { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+  h2 { color: var(--tw-dark); font-size: 1.5rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--tw-teal); }
+  h3 { color: var(--tw-accent); font-size: 1.1rem; margin: 1.5rem 0 0.6rem; }
+
+  .prohibited-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+  .prohibited-table th { background: var(--tw-dark); color: #fff; padding: 8px 12px; text-align: left; font-weight: 500; font-size: 0.8rem; }
+  .prohibited-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .prohibited-table tr:nth-child(even) { background: #fafafa; }
+
+  .severity-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+  .sev-extreme { background: #b71c1c; color: #fff; }
+  .sev-eleve { background: #e65100; color: #fff; }
+  .sev-moyen { background: #f9a825; color: #333; }
+  .sev-faible { background: #81c784; color: #333; }
+
+  .highlight-box { background: var(--bg-card); border-left: 4px solid var(--tw-teal); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .highlight-box.danger { border-left-color: var(--danger); background: #fff5f5; }
+
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { padding: 6px 0; padding-left: 1.8rem; position: relative; }
+  .checklist li::before { content: '☐'; position: absolute; left: 0; color: var(--tw-teal); font-weight: bold; }
+
+  .footer { text-align: center; padding: 2rem; color: var(--gray); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 3rem; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="logo-placeholder">AI RISK SENTINEL</div>
+  <h1>Politique d'Usage<br>de l'Intelligence Artificielle</h1>
+  <h2>Encadrement des usages de l'IA générative en entreprise</h2>
+
+  <div class="ref">Référence : ISO 42001 §6.2 — Objectifs du SMSIA | §7.5 — Information documentée</div>
+
+  <div class="meta">
+    <strong>Client :</strong> {{ client }}<br>
+    <strong>Date :</strong> {{ date }}<br>
+    <strong>Version :</strong> 1.0<br>
+    <strong>Classification :</strong> Confidentiel — Usage interne
+  </div>
+</div>
+
+<div class="content">
+
+<!-- 1. Objet et périmètre -->
+<h2>1. Objet et Périmètre</h2>
+<p>La présente politique définit les règles d'utilisation des outils d'intelligence artificielle générative au sein de <strong>{{ client }}</strong>. Elle s'applique à l'ensemble des collaborateurs, prestataires et stagiaires ayant accès aux systèmes d'information de l'organisation.</p>
+
+<div class="highlight-box">
+  <strong>Contexte d'évaluation :</strong> {{ total_models_tested }} modèles d'IA ont été évalués sur {{ total_attacks_tested }} scénarios d'attaque adversarial. Le taux de vulnérabilité mesuré est de <strong style="color:{% if vulnerability_rate > 50 %}#d32f2f{% elif vulnerability_rate > 20 %}#f57c00{% else %}#2e7d32{% endif %};">{{ vulnerability_rate }}%</strong>. La sévérité maximale identifiée est <strong>{{ worst_severity }}</strong>. Cette politique est calibrée sur ces résultats.
+</div>
+
+<!-- 2. Outils IA autorisés -->
+<h2>2. Outils IA Autorisés</h2>
+<p>Seuls les outils d'IA générative ci-dessous sont autorisés. Toute utilisation d'un outil non listé doit faire l'objet d'une demande d'approbation auprès du RSSI.</p>
+
+{% if models_tested %}
+<table class="prohibited-table">
+  <thead>
+    <tr><th>Modèle</th><th>Statut</th><th>Conditions</th></tr>
+  </thead>
+  <tbody>
+    {% for model in models_tested %}
+    <tr>
+      <td><strong>{{ model }}</strong></td>
+      <td><span style="color:#2e7d32; font-weight:600;">✓ Autorisé</span></td>
+      <td>Usage professionnel uniquement. Ne pas saisir de données confidentielles.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="highlight-box">
+  <p>Aucun modèle évalué. Lancer une campagne de test avec <code>python3 ai_risk_demo.py --all</code> pour générer la liste des outils autorisés.</p>
+</div>
+{% endif %}
+
+<p style="margin-top:1rem; font-size:0.85rem; color:var(--gray);">Cette liste est révisée trimestriellement. La RSSI peut suspendre un outil si une vulnérabilité critique est découverte.</p>
+
+<!-- 3. Usages interdits -->
+<div class="page-break"></div>
+<h2>3. Usages Interdits</h2>
+<p>Les usages suivants sont <strong>strictement interdits</strong>. Toute infraction est passible de sanctions disciplinaires.</p>
+
+{% if prohibited_uses %}
+<table class="prohibited-table">
+  <thead>
+    <tr><th>Usage interdit</th><th>Risque associé</th><th>Sévérité</th></tr>
+  </thead>
+  <tbody>
+    {% for use in prohibited_uses %}
+    <tr>
+      <td>{{ use.action }}</td>
+      <td>{{ use.risk }} — {{ use.description[:100] }}</td>
+      <td><span class="severity-badge sev-{{ use.severity|lower|replace('é','e') }}">{{ use.severity }}</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Aucun scénario d'attaque chargé. Importer les définitions pour générer la liste des usages interdits.</p>
+{% endif %}
+
+<div class="highlight-box danger">
+  <strong>Rappel RGPD :</strong> La saisie de données personnelles (nom, email, téléphone, IBAN, carte bancaire) dans un outil IA constitue une violation de données au sens du RGPD. L'outil doit être immédiatement fermé et l'incident signalé au DPO.
+</div>
+
+<!-- 4. Classification des données -->
+<h2>4. Classification des Données</h2>
+<p>Le niveau de classification détermine si une donnée peut être transmise à un outil IA :</p>
+
+<table class="prohibited-table">
+  <thead>
+    <tr><th>Niveau</th><th>Description</th><th>IA autorisée ?</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><strong>Public</strong></td><td>Information destinée au public</td><td style="color:#2e7d32;">✓ Oui</td></tr>
+    <tr><td><strong>Interne</strong></td><td>Usage interne uniquement</td><td><span style="color:#f57c00;">⚠ Avec accord hiérarchique</span></td></tr>
+    <tr><td><strong>Confidentiel</strong></td><td>Données sensibles (clients, finances, RH)</td><td style="color:#d32f2f;">✗ Interdit</td></tr>
+    <tr><td><strong>Secret</strong></td><td>Secret industriel, stratégie</td><td style="color:#d32f2f;">✗ Interdit</td></tr>
+  </tbody>
+</table>
+
+<!-- 5. Processus d'approbation -->
+<h2>5. Processus d'Approbation</h2>
+<p>Toute demande d'utilisation d'un nouvel outil IA suit le circuit suivant :</p>
+
+<ol style="margin:1rem 0 1rem 2rem; line-height:2;">
+  <li><strong>Demande</strong> — Le collaborateur soumet le formulaire de demande d'accès (Annexe A)</li>
+  <li><strong>Évaluation</strong> — Le RSSI évalue le fournisseur selon la Grille d'Évaluation Fournisseurs IA</li>
+  <li><strong>DPIA</strong> — Si données personnelles, le DPO réalise une Analyse d'Impact (AIPD)</li>
+  <li><strong>Décision</strong> — La DSI autorise ou refuse l'outil. Délai maximal : 10 jours ouvrés</li>
+  <li><strong>Registre</strong> — L'outil est inscrit au registre des traitements IA</li>
+</ol>
+
+<!-- 6. Formation -->
+<h2>6. Formation Obligatoire</h2>
+<p>Tout utilisateur d'un outil IA doit avoir suivi la formation « Sensibilisation aux Risques IA » dans les 30 jours suivant l'attribution de l'accès. La formation couvre :</p>
+<ul style="margin:0.5rem 0 1rem 2rem; line-height:2;">
+  <li>Les risques de fuite de données via les prompts</li>
+  <li>La détection des hallucinations et la validation humaine obligatoire</li>
+  <li>Les techniques d'injection de prompt et comment les signaler</li>
+  <li>La procédure de signalement d'incident</li>
+</ul>
+
+<!-- 7. Sanctions -->
+<h2>7. Sanctions</h2>
+<p>Le non-respect de cette politique expose le contrevenant à :</p>
+<ul style="margin:0.5rem 0 1rem 2rem; line-height:2;">
+  <li>Suspension immédiate de l'accès aux outils IA</li>
+  <li>Sanction disciplinaire pouvant aller jusqu'au licenciement</li>
+  <li>Poursuites pénales en cas de violation délibérée (fuite de données, fraude)</li>
+</ul>
+
+<!-- 8. Révision -->
+<h2>8. Révision</h2>
+<div class="highlight-box">
+  <p>Cette politique est révisée <strong>trimestriellement</strong> par le RSSI. Une révision extraordinaire est déclenchée en cas d'incident majeur ou d'évolution réglementaire.</p>
+</div>
+
+<table class="prohibited-table" style="margin-top:1rem;">
+  <thead><tr><th>Version</th><th>Date</th><th>Auteur</th><th>Modifications</th></tr></thead>
+  <tbody>
+    <tr><td>1.0</td><td>{{ date }}</td><td>RSSI</td><td>Version initiale</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<div class="footer">
+  <p>Politique d'Usage de l'IA — {{ client }}</p>
+  <p>Référence : ISO 42001:2023 — Système de Management de l'Intelligence Artificielle</p>
+  <p>Ce document est confidentiel et destiné exclusivement au client désigné.</p>
+</div>
+
+</body>
+</html>

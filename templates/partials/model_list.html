@@ -1,0 +1,33 @@
+<!-- models: {{ models|length }} -->
+{% if error %}
+<div class="card" style="border-color: var(--red);">
+  <p style="color: var(--red);">Discovery error: {{ error }}</p>
+</div>
+{% endif %}
+
+{% if models %}
+<p style="color: var(--dim); font-size: 0.85rem; margin-bottom: 0.5rem;">
+  {{ models|length }} models found
+</p>
+<table>
+  <thead>
+    <tr><th>Model ID</th><th>Provider</th><th>Owned By</th><th>Context</th><th>Capabilities</th></tr>
+  </thead>
+  <tbody>
+    {% for m in models %}
+    <tr>
+      <td><strong>{{ m.id }}</strong></td>
+      <td>{{ m.provider }}</td>
+      <td style="color: var(--dim);">{{ m.owned_by }}</td>
+      <td>{{ (m.context_window // 1000) if m.context_window else '—' }}K</td>
+      <td style="color: var(--dim); font-size: 0.75rem;">{{ m.capabilities|join(', ') if m.capabilities else '—' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty">
+  <div class="icon">&#128270;</div>
+  <p>No models discovered yet. Click "Discover Models" to query the API.</p>
+</div>
+{% endif %}

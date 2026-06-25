@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Attacks — AI Risk Sentinel{% endblock %}
+{% block content %}
+
+<h1>New Attack Run</h1>
+<p style="color: var(--dim); margin-bottom: 1rem;">
+  Select models to target and attacks to execute. Press Run to start.
+</p>
+
+<form id="run-form" hx-post="/run" hx-target="body">
+  <input type="hidden" name="client" value="Neuraluna">
+  <input type="hidden" name="models_json" id="models-json" value="[]">
+  <input type="hidden" name="attacks_json" id="attacks-json" value="[]">
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+
+    <!-- Models column -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <h2 style="margin:0;">Models</h2>
+        <button type="button" class="btn sm" onclick="toggleAll('models')">Select All</button>
+      </div>
+      <p style="font-size:0.8rem; color:var(--dim); margin-bottom:0.5rem;">
+        {{ model_count }} available
+      </p>
+
+      {% if models %}
+      <ul class="checklist">
+        {% for m in models %}
+        <li>
+          <label>
+            <input type="checkbox" class="model-cb" value="{{ m.id }}"
+                   onchange="updateJson()">
+            <span>{{ m.id }}</span>
+            <span style="color:var(--dim);font-size:0.75rem;">({{ m.owned_by }})</span>
+          </label>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p style="color: var(--dim); font-size: 0.85rem;">
+        No models cached. <a href="/discover">Discover models first.</a>
+      </p>
+      {% endif %}
+    </div>
+
+    <!-- Attacks column -->
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+        <h2 style="margin:0;">Attacks</h2>
+        <button type="button" class="btn sm" onclick="toggleAll('attacks')">Select All</button>
+      </div>
+      <p style="font-size:0.8rem; color:var(--dim); margin-bottom:0.5rem;">
+        {{ attack_count }} scenarios
+      </p>
+
+      {% if attacks %}
+      <ul class="checklist">
+        {% for a in attacks %}
+        <li>
+          <label>
+            <input type="checkbox" class="attack-cb" value="{{ a.attack_id }}"
+                   onchange="updateJson()">
+            <span>{{ a.attack_id }}</span>
+            <span class="badge {{ 'vulnerable' if a.severity == 'Extrême' else 'unclear' if a.severity == 'Élevé' else 'error' }}">
+              {{ a.rsk_id }}
+            </span>
+          </label>
+          <p style="color:var(--dim);font-size:0.7rem;margin-left:1.5rem;">{{ a.title[:80] }}</p>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p style="color: var(--dim); font-size: 0.85rem;">
+        No attack definitions loaded.
+      </p>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <div style="margin-top: 1.5rem; text-align: center;">
+    <button type="submit" class="btn primary" style="font-size:1rem;padding:0.7rem 2rem;"
+            hx-indicator="#run-spinner">
+      Run Attacks
+    </button>
+    <span id="run-spinner" class="htmx-indicator" style="color: var(--dim); margin-left: 0.5rem;">
+      Launching...
+    </span>
+  </div>
+</form>
+
+<script>
+function updateJson() {
+  var models = [];
+  document.querySelectorAll('.model-cb:checked').forEach(function(cb) { models.push(cb.value); });
+  document.getElementById('models-json').value = JSON.stringify(models);
+
+  var attacks = [];
+  document.querySelectorAll('.attack-cb:checked').forEach(function(cb) { attacks.push(cb.value); });
+  document.getElementById('attacks-json').value = JSON.stringify(attacks);
+}
+
+function toggleAll(type) {
+  var cbs = document.querySelectorAll('.' + type + '-cb');
+  var allChecked = Array.from(cbs).every(function(cb) { return cb.checked; });
+  cbs.forEach(function(cb) { cb.checked = !allChecked; });
+  updateJson();
+}
+</script>
+
+{% endblock %}

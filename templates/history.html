@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}History — AI Risk Sentinel{% endblock %}
+{% block content %}
+
+<h1>Run History</h1>
+
+{% if runs %}
+<table>
+  <thead>
+    <tr><th>ID</th><th>Client</th><th>Status</th><th>Tests</th><th>Vuln</th><th>Res</th><th>Err</th><th>Date</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for r in runs %}
+    <tr>
+      <td><code>{{ r.id }}</code></td>
+      <td>{{ r.client }}</td>
+      <td><span class="status-dot {{ r.status }}"></span>{{ r.status }}</td>
+      <td>{{ r.completed_tests }}/{{ r.total_tests }}</td>
+      <td><span class="badge vulnerable">{{ r.vulnerable_count }}</span></td>
+      <td><span class="badge resistant">{{ r.resistant_count }}</span></td>
+      <td><span class="badge error">{{ r.error_count }}</span></td>
+      <td style="color:var(--dim);font-size:0.8rem;">{{ r.created_at[:16] }}</td>
+      <td>
+        {% if r.status == "done" %}
+        <a href="/results/{{ r.id }}" class="btn sm">Results</a>
+        <a href="/report/{{ r.id }}" class="btn sm">Report</a>
+        {% elif r.status == "running" %}
+        <a href="/run/{{ r.id }}" class="btn sm primary">Live</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="empty">
+  <div class="icon">&#128203;</div>
+  <p>No runs yet.</p>
+  <a href="/attacks" class="btn primary" style="margin-top:1rem;">Launch First Run</a>
+</div>
+{% endif %}
+
+{% endblock %}

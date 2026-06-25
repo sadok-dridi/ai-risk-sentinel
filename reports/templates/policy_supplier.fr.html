@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grille d'Évaluation Fournisseurs IA — {{ client }}</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  @media print { body { font-size: 10pt; } .no-print { display: none; } .page-break { page-break-before: always; } }
+
+  :root {
+    --tw-dark: #1a1a2e; --tw-accent: #16213e; --tw-blue: #0f4c81; --tw-teal: #0d7377;
+    --danger: #d32f2f; --safe: #2e7d32; --warn: #f57c00; --gray: #757575;
+    --bg-card: #f5f7fa; --border: #e0e0e0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #212121; background: #fff; line-height: 1.6;
+  }
+
+  .cover {
+    background: linear-gradient(135deg, var(--tw-dark) 0%, var(--tw-accent) 100%);
+    color: #fff; min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 4rem; page-break-after: always;
+  }
+  .cover h1 { font-size: 2rem; font-weight: 300; margin-bottom: 0.5rem; }
+  .cover h2 { font-size: 1rem; font-weight: 400; opacity: 0.8; margin-bottom: 2rem; }
+  .cover .meta { margin-top: 3rem; font-size: 0.9rem; opacity: 0.75; line-height: 1.8; }
+  .cover .meta strong { font-weight: 600; opacity: 1; }
+  .cover .ref { margin-top: 2rem; padding: 0.8rem 1.2rem; border-left: 3px solid var(--tw-teal); background: rgba(255,255,255,0.08); font-size: 0.85rem; }
+  .logo-placeholder { font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; margin-bottom: 3rem; }
+
+  .content { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+  h2 { color: var(--tw-dark); font-size: 1.5rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--tw-teal); }
+  h3 { color: var(--tw-accent); font-size: 1.1rem; margin: 1.5rem 0 0.6rem; }
+
+  .criteria-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+  .criteria-table th { background: var(--tw-dark); color: #fff; padding: 10px 14px; text-align: left; font-weight: 500; font-size: 0.8rem; }
+  .criteria-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .criteria-table tr:nth-child(even) { background: #fafafa; }
+  .criteria-table .weight { text-align: center; font-weight: 700; color: var(--tw-blue); }
+
+  .score-row { display: flex; align-items: center; gap: 1rem; margin: 0.3rem 0; }
+  .score-cell { width: 36px; height: 36px; border: 2px solid var(--border); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem; cursor: default; }
+  .score-1 { border-color: #ef9a9a; color: #c62828; background: #ffebee; }
+  .score-2 { border-color: #ffcc80; color: #e65100; background: #fff3e0; }
+  .score-3 { border-color: #fff59d; color: #f9a825; background: #fffde7; }
+  .score-4 { border-color: #a5d6a7; color: #2e7d32; background: #e8f5e9; }
+  .score-5 { border-color: #43a047; color: #1b5e20; background: #c8e6c9; }
+
+  .highlight-box { background: var(--bg-card); border-left: 4px solid var(--tw-teal); padding: 1rem 1.2rem; margin: 1rem 0; border-radius: 0 6px 6px 0; }
+  .highlight-box.warn { border-left-color: var(--warn); background: #fff8e1; }
+
+  .supplier-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; margin: 0.8rem 0; page-break-inside: avoid; }
+  .supplier-card .name { font-weight: 700; color: var(--tw-dark); font-size: 1rem; }
+  .supplier-card .details { color: var(--gray); font-size: 0.85rem; }
+
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { padding: 6px 0; padding-left: 1.8rem; position: relative; }
+  .checklist li::before { content: '☐'; position: absolute; left: 0; color: var(--tw-teal); font-weight: bold; }
+
+  .footer { text-align: center; padding: 2rem; color: var(--gray); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 3rem; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="logo-placeholder">AI RISK SENTINEL</div>
+  <h1>Grille d'Évaluation<br>des Fournisseurs IA</h1>
+  <h2>Méthodologie d'évaluation pour la sélection d'outils d'IA générative</h2>
+
+  <div class="ref">Référence : ISO 42001 §8.1 — Planification et maîtrise opérationnelles | Annexe A — Contrôles</div>
+
+  <div class="meta">
+    <strong>Client :</strong> {{ client }}<br>
+    <strong>Date :</strong> {{ date }}<br>
+    <strong>Version :</strong> 1.0<br>
+    <strong>Classification :</strong> Confidentiel — Usage interne
+  </div>
+</div>
+
+<div class="content">
+
+<!-- 1. Objectif -->
+<h2>1. Objectif</h2>
+<p>Cette grille permet d'évaluer de manière objective les fournisseurs d'outils d'intelligence artificielle générative avant leur adoption par <strong>{{ client }}</strong>. Elle couvre les dimensions de souveraineté, conformité RGPD, sécurité, transparence et niveau de service.</p>
+
+<div class="highlight-box">
+  <strong>Contexte :</strong> {{ total_models }} modèles ont été évalués dans le cadre de la campagne de tests AI Risk Demo. Le taux de vulnérabilité global mesuré est de <strong>{{ vulnerability_rate }}%</strong>. Cette grille intègre les enseignements de ces tests.
+</div>
+
+<!-- 2. Critères -->
+<h2>2. Critères d'Évaluation</h2>
+<p>Chaque critère est noté de 1 (insatisfaisant) à 5 (excellent). Le score total est pondéré selon les coefficients ci-dessous.</p>
+
+<table class="criteria-table">
+  <thead>
+    <tr><th style="width:5%;">#</th><th>Critère</th><th style="width:10%;">Poids</th><th>Description</th><th style="width:30%;">Guide de notation</th></tr>
+  </thead>
+  <tbody>
+    {% for c in criteria %}
+    <tr>
+      <td style="text-align:center;">{{ loop.index }}</td>
+      <td><strong>{{ c.label }}</strong></td>
+      <td class="weight">{{ c.weight }}%</td>
+      <td>{{ c.description }}</td>
+      <td>
+        <div class="score-row">
+          <span class="score-cell score-1">1</span> Non conforme / Non documenté
+          <span class="score-cell score-3">3</span> Partiellement conforme
+          <span class="score-cell score-5">5</span> Pleinement conforme / Certifié
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- 3. Seuils -->
+<h2>3. Seuils d'Acceptation</h2>
+
+<table class="criteria-table">
+  <thead>
+    <tr><th>Score total</th><th>Décision</th><th>Action</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align:center; font-size:1.2rem; font-weight:700; color:#2e7d32;">≥ {{ acceptance_threshold }}/100</td>
+      <td><strong style="color:#2e7d32;">ACCEPTÉ</strong></td>
+      <td>Autorisation standard. Inscription au registre des traitements IA.</td>
+    </tr>
+    <tr>
+      <td style="text-align:center; font-size:1.2rem; font-weight:700; color:#f57c00;">50 – {{ acceptance_threshold - 1 }}/100</td>
+      <td><strong style="color:#f57c00;">ACCEPTÉ SOUS CONDITIONS</strong></td>
+      <td>Plan de remédiation requis sous 3 mois. Restrictions d'usage (pas de données confidentielles).</td>
+    </tr>
+    <tr>
+      <td style="text-align:center; font-size:1.2rem; font-weight:700; color:#d32f2f;">< 50/100</td>
+      <td><strong style="color:#d32f2f;">REFUSÉ</strong></td>
+      <td>Interdiction d'usage. Le fournisseur peut être réévalué après mise en conformité.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="highlight-box warn">
+  <strong>Règle absolue :</strong> Un score inférieur à 3/5 sur le critère « Conformité RGPD » entraîne un refus automatique, quel que soit le score total. La conformité RGPD n'est pas négociable.
+</div>
+
+<!-- 4. Fiche fournisseur -->
+<div class="page-break"></div>
+<h2>4. Modèle de Fiche Fournisseur</h2>
+<p>À remplir pour chaque fournisseur évalué :</p>
+
+<div class="supplier-card">
+  <div class="name">FOURNISSEUR : [Nom du fournisseur]</div>
+  <div class="details">Modèle évalué : [Nom du modèle] | Date d'évaluation : [JJ/MM/AAAA]</div>
+
+  <table class="criteria-table" style="margin-top:1rem;">
+    <thead>
+      <tr><th>Critère</th><th style="width:12%;">Poids</th><th style="width:12%;">Note (1-5)</th><th style="width:12%;">Score pondéré</th><th>Commentaire</th></tr>
+    </thead>
+    <tbody>
+      {% for c in criteria %}
+      <tr>
+        <td>{{ c.label }}</td>
+        <td class="weight">{{ c.weight }}%</td>
+        <td style="text-align:center;">[  ]</td>
+        <td style="text-align:center; color:var(--gray);">—</td>
+        <td style="color:var(--gray);">[Justification]</td>
+      </tr>
+      {% endfor %}
+      <tr style="background:var(--bg-card); font-weight:700;">
+        <td colspan="2" style="text-align:right;">SCORE TOTAL</td>
+        <td colspan="3" style="text-align:center;">[   ] / {{ max_total }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="margin-top:0.8rem;"><strong>Décision :</strong> [  ] Accepté &nbsp; [  ] Accepté sous conditions &nbsp; [  ] Refusé</p>
+  <p><strong>Évaluateur :</strong> [Nom RSSI/DSI] &nbsp; | &nbsp; <strong>Date :</strong> [JJ/MM/AAAA]</p>
+</div>
+
+<!-- 5. Checklist de vérification -->
+<h2>5. Checklist de Vérification Documentaire</h2>
+<p>Documents à exiger du fournisseur avant évaluation :</p>
+
+<ul class="checklist" style="margin:0.5rem 0;">
+  <li>DPA (Data Processing Agreement) signé — Annexe RGPD Article 28</li>
+  <li>Certification ISO 27001 ou SOC 2 Type II en cours de validité</li>
+  <li>Rapport de pentest / audit de sécurité indépendant (moins de 12 mois)</li>
+  <li>Documentation du modèle (model card) — architecture, données d'entraînement, limitations</li>
+  <li>Liste des sous-traitants impliqués dans le traitement des données</li>
+  <li>Politique de rétention et de suppression des données</li>
+  <li>Engagements de SLA — disponibilité, temps de réponse, support</li>
+</ul>
+
+<!-- 6. Modèles testés -->
+{% if models_evaluated %}
+<div class="page-break"></div>
+<h2>6. Modèles Évalués</h2>
+<p>Liste des modèles inclus dans la campagne de test AI Risk Demo :</p>
+
+<table class="criteria-table">
+  <thead>
+    <tr><th>Modèle</th><th>Fournisseur</th><th>Statut d'évaluation</th></tr>
+  </thead>
+  <tbody>
+    {% for m in models_evaluated %}
+    <tr>
+      <td><strong>{{ m.model_id }}</strong></td>
+      <td>{{ m.provider }}</td>
+      <td><span style="color:var(--warn);">En attente d'évaluation complète</span></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<!-- 7. Révision -->
+<h2>7. Révision</h2>
+<div class="highlight-box">
+  <p>Cette grille est révisée <strong>annuellement</strong> ou lors de tout changement majeur dans le paysage réglementaire (nouvelle version du RGPD, EU AI Act, normes ISO applicables).</p>
+</div>
+
+<table class="criteria-table" style="margin-top:1rem;">
+  <thead><tr><th>Version</th><th>Date</th><th>Auteur</th><th>Modifications</th></tr></thead>
+  <tbody>
+    <tr><td>1.0</td><td>{{ date }}</td><td>RSSI</td><td>Version initiale</td></tr>
+  </tbody>
+</table>
+
+</div>
+
+<div class="footer">
+  <p>Grille d'Évaluation Fournisseurs IA — {{ client }}</p>
+  <p>Référence : ISO 42001:2023 §8.1 — Planification et maîtrise opérationnelles</p>
+</div>
+
+</body>
+</html>

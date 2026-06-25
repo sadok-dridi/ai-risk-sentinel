@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AI Risk Sentinel{% endblock %}</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/htmx.min.js"></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <div class="logo fs-5 fw-bold">AI Risk Sentinel</div>
+    <nav>
+      <a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>Dashboard</a>
+      <a href="/discover" {% if request.url.path == "/discover" %}class="active"{% endif %}>Models</a>
+      <a href="/attacks" {% if request.url.path == "/attacks" %}class="active"{% endif %}>Attacks</a>
+      <a href="/history" {% if request.url.path == "/history" %}class="active"{% endif %}>History</a>
+    </nav>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    AI Risk Sentinel v3.0 · ISO 42001 §8.2
+  </footer>
+</body>
+</html>

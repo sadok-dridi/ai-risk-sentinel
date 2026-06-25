@@ -1,0 +1,28 @@
+# Bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Environment
+.env
+
+# SQLite database
+*.db
+
+# Generated output
+output/reports/*.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python
+*.egg-info/
+dist/
+build/

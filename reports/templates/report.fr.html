@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rapport d'Évaluation des Risques IA — {{ client }}</title>
+<style>
+  @page { margin: 2cm; size: A4; }
+  @media print { body { font-size: 10pt; } .no-print { display: none; } .page-break { page-break-before: always; } }
+
+  :root {
+    --tw-dark: #1a1a2e;
+    --tw-accent: #16213e;
+    --tw-blue: #0f4c81;
+    --tw-teal: #0d7377;
+    --danger: #d32f2f;
+    --safe: #2e7d32;
+    --warn: #f57c00;
+    --gray: #757575;
+    --bg-card: #f5f7fa;
+    --border: #e0e0e0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: #212121;
+    background: #fff;
+    line-height: 1.6;
+  }
+
+  /* ── Cover ──────────────────────────────────────── */
+  .cover {
+    background: linear-gradient(135deg, var(--tw-dark) 0%, var(--tw-accent) 100%);
+    color: #fff;
+    min-height: 100vh;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 4rem;
+    page-break-after: always;
+  }
+  .cover h1 { font-size: 2.4rem; font-weight: 300; margin-bottom: 0.5rem; }
+  .cover h2 { font-size: 1.1rem; font-weight: 400; opacity: 0.8; margin-bottom: 2rem; }
+  .cover .meta { margin-top: 3rem; font-size: 0.95rem; opacity: 0.75; line-height: 1.8; }
+  .cover .meta strong { font-weight: 600; opacity: 1; }
+  .cover .ref { margin-top: 2rem; padding: 0.8rem 1.2rem; border-left: 3px solid var(--tw-teal); background: rgba(255,255,255,0.08); font-size: 0.9rem; }
+  .logo-placeholder { font-size: 0.85rem; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.5; margin-bottom: 3rem; }
+
+  /* ── Content ────────────────────────────────────── */
+  .content { max-width: 960px; margin: 0 auto; padding: 2rem; }
+
+  h2 { color: var(--tw-dark); font-size: 1.5rem; margin: 2rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--tw-teal); }
+  h3 { color: var(--tw-accent); font-size: 1.15rem; margin: 1.2rem 0 0.6rem; }
+  h4 { font-size: 1rem; color: #333; margin: 0.8rem 0 0.3rem; }
+
+  /* ── Summary Boxes ──────────────────────────────── */
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+  .stat-box { background: var(--bg-card); border-radius: 8px; padding: 1.2rem; text-align: center; border: 1px solid var(--border); }
+  .stat-box .number { font-size: 2rem; font-weight: 700; }
+  .stat-box .label { font-size: 0.8rem; text-transform: uppercase; color: var(--gray); margin-top: 0.3rem; }
+  .stat-box.danger .number { color: var(--danger); }
+  .stat-box.safe .number { color: var(--safe); }
+  .stat-box.warn .number { color: var(--warn); }
+  .stat-box.gray .number { color: var(--gray); }
+
+  .maturity-bar {
+    background: var(--border); border-radius: 6px; height: 24px; overflow: hidden; margin: 1rem 0;
+    display: flex;
+  }
+  .maturity-bar .seg-safe { background: var(--safe); }
+  .maturity-bar .seg-danger { background: var(--danger); }
+  .maturity-bar .seg-warn { background: var(--warn); }
+  .maturity-bar .seg-gray { background: var(--gray); }
+
+  /* ── Matrix ─────────────────────────────────────── */
+  .matrix-container { overflow-x: auto; margin: 1rem 0; }
+  .matrix { border-collapse: collapse; font-size: 0.85rem; width: 100%; }
+  .matrix th, .matrix td { padding: 6px 10px; border: 1px solid var(--border); text-align: center; }
+  .matrix th { background: var(--tw-dark); color: #fff; font-weight: 500; font-size: 0.75rem; white-space: nowrap; }
+  .matrix td:first-child { background: var(--bg-card); font-weight: 600; text-align: left; white-space: nowrap; font-size: 0.8rem; }
+  .matrix .vulnerable { background: #ffcdd2; color: var(--danger); font-weight: 700; }
+  .matrix .resistant { background: #c8e6c9; color: var(--safe); font-weight: 700; }
+  .matrix .unclear { background: #ffe0b2; color: var(--warn); }
+  .matrix .error { background: #e0e0e0; color: var(--gray); }
+  .matrix .skipped { background: #fafafa; color: #bbb; }
+
+  /* ── Attack Cards ───────────────────────────────── */
+  .attack-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    page-break-inside: avoid;
+  }
+  .attack-card .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+  .attack-card .rsk-id { font-size: 0.75rem; background: var(--tw-dark); color: #fff; padding: 2px 8px; border-radius: 4px; font-weight: 700; }
+  .attack-card .severity { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; text-transform: uppercase; }
+  .severity-extreme { background: #b71c1c; color: #fff; }
+  .severity-eleve { background: #e65100; color: #fff; }
+  .severity-moyen { background: #f9a825; color: #333; }
+  .severity-faible { background: #81c784; color: #333; }
+
+  .attack-card .desc { color: #555; font-size: 0.9rem; margin-bottom: 0.8rem; }
+  .attack-card .prompt-box { background: #263238; color: #aed581; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.82rem; padding: 0.8rem; border-radius: 6px; overflow-x: auto; margin: 0.8rem 0; white-space: pre-wrap; }
+  .attack-card .mtr { background: #e3f2fd; border-left: 3px solid var(--tw-blue); padding: 0.6rem 1rem; margin-top: 0.8rem; font-size: 0.85rem; border-radius: 0 4px 4px 0; }
+
+  /* ── Model Results Mini-Table ───────────────────── */
+  .mini-table { width: 100%; border-collapse: collapse; margin-top: 0.6rem; font-size: 0.82rem; }
+  .mini-table th { background: var(--tw-accent); color: #fff; padding: 4px 10px; text-align: left; font-weight: 500; }
+  .mini-table td { padding: 4px 10px; border-bottom: 1px solid var(--border); }
+  .mini-table tr:nth-child(even) { background: #fafafa; }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+  .badge-danger { background: #ffcdd2; color: #c62828; }
+  .badge-safe { background: #c8e6c9; color: #1b5e20; }
+  .badge-warn { background: #ffe0b2; color: #e65100; }
+  .badge-gray { background: #e0e0e0; color: #424242; }
+
+  /* ── Recommendations ───────────────────────────── */
+  .rec-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--tw-teal);
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+    border-radius: 0 6px 6px 0;
+  }
+  .rec-card .rec-ref { font-weight: 700; color: var(--tw-dark); font-size: 0.85rem; }
+  .rec-card .rec-desc { color: #555; font-size: 0.88rem; margin-top: 0.3rem; }
+  .rec-card .rec-related { font-size: 0.75rem; color: var(--gray); margin-top: 0.3rem; }
+
+  /* ── Empty State ────────────────────────────────── */
+  .empty-state { text-align: center; padding: 3rem; color: var(--gray); }
+  .empty-state .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+  /* ── Footer ─────────────────────────────────────── */
+  .footer { text-align: center; padding: 2rem; color: var(--gray); font-size: 0.8rem; border-top: 1px solid var(--border); margin-top: 3rem; }
+</style>
+</head>
+<body>
+
+<!-- ════════════ COVER ════════════ -->
+<div class="cover">
+  <div class="logo-placeholder">AI RISK SENTINEL</div>
+  <h1>Rapport d'Évaluation<br>des Risques IA</h1>
+  <h2>Analyse de vulnérabilité par attaques adversariales</h2>
+
+  <div class="ref">Référence : ISO 42001 §8.2 — Appréciation des Risques liés à l'IA</div>
+
+  <div class="meta">
+    <strong>Client :</strong> {{ client }}<br>
+    <strong>Date :</strong> {{ date }}<br>
+    <strong>Modèles testés :</strong> {{ total_models }}<br>
+    <strong>Scénarios d'attaque :</strong> {{ total_attacks }}<br>
+    <strong>Tests exécutés :</strong> {{ total_tests }}
+  </div>
+</div>
+
+<!-- ════════════ CONTENT ════════════ -->
+<div class="content">
+
+<!-- ── Executive Summary ──────────────────────────── -->
+<h2>1. Résumé Exécutif</h2>
+
+{% if stats.resistant + stats.vulnerable == 0 and stats.error > 0 %}
+<div class="empty-state">
+  <div class="icon">&#9888;</div>
+  <p><strong>{{ stats.error }} erreurs API</strong> — Les tests n'ont pas pu être exécutés.</p>
+  <p style="margin-top:0.5rem">Vérifier les crédits API et la connectivité réseau avant de relancer.</p>
+</div>
+{% elif total_tests == 0 %}
+<div class="empty-state">
+  <div class="icon">&#128196;</div>
+  <p>Aucun résultat disponible. Lancer une campagne de test avec <code>python3 ai_risk_demo.py --all</code></p>
+</div>
+{% else %}
+
+<div class="summary-grid">
+  <div class="stat-box safe">
+    <div class="number">{{ stats.resistant }}</div>
+    <div class="label">Résistants</div>
+  </div>
+  <div class="stat-box danger">
+    <div class="number">{{ stats.vulnerable }}</div>
+    <div class="label">Vulnérables</div>
+  </div>
+  <div class="stat-box warn">
+    <div class="number">{{ stats.unclear }}</div>
+    <div class="label">Incertains</div>
+  </div>
+  <div class="stat-box gray">
+    <div class="number">{{ stats.error }}</div>
+    <div class="label">Erreurs</div>
+  </div>
+</div>
+
+<div style="margin: 1.5rem 0;">
+  <p style="font-weight:600; margin-bottom:0.3rem;">Profil de risque : <strong style="color:{% if stats.vulnerability_rate > 50 %}#d32f2f{% elif stats.vulnerability_rate > 20 %}#f57c00{% else %}#2e7d32{% endif %};">{{ stats.vulnerability_rate }}% de vulnérabilité</strong></p>
+  <div class="maturity-bar">
+    {% set r_pct = stats.resistance_rate %}
+    {% set v_pct = stats.vulnerability_rate %}
+    {% set u_pct = (stats.unclear / total_tests * 100) if total_tests > 0 else 0 %}
+    {% set e_pct = (stats.error / total_tests * 100) if total_tests > 0 else 0 %}
+    <div class="seg-safe" style="width:{{ r_pct }}%"></div>
+    <div class="seg-danger" style="width:{{ v_pct }}%"></div>
+    <div class="seg-warn" style="width:{{ u_pct }}%"></div>
+    <div class="seg-gray" style="width:{{ e_pct }}%"></div>
+  </div>
+  <p style="font-size:0.8rem; color:#757575;">{{ stats.resistance_rate }}% de réponses résistantes | {{ stats.vulnerability_rate }}% de réponses vulnérables | {{ (stats.unclear / total_tests * 100)|round(1) if total_tests > 0 else 0 }}% incertaines | {{ (stats.error / total_tests * 100)|round(1) if total_tests > 0 else 0 }}% erreurs</p>
+</div>
+{% endif %}
+
+<!-- ── Risk Matrix ────────────────────────────────── -->
+<div class="page-break"></div>
+<h2>2. Matrice des Risques</h2>
+<p style="color:#757575; font-size:0.9rem; margin-bottom:1rem;">
+  Modèles en lignes, scénarios d'attaque en colonnes.
+  <span class="badge badge-danger">VULN</span> = modèle a cédé à l'attaque,
+  <span class="badge badge-safe">RES</span> = modèle a résisté,
+  <span class="badge badge-warn">INC</span> = résultat ambigu,
+  <span class="badge badge-gray">ERR</span> = erreur API.
+</p>
+
+<div class="matrix-container">
+<table class="matrix">
+  <thead>
+    <tr>
+      <th>Modèle</th>
+      {% for attack in matrix.attacks %}
+      <th>{{ attack[:12] }}</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for model in matrix.models %}
+    <tr>
+      <td>{{ model[:28] }}</td>
+      {% for attack in matrix.attacks %}
+      {% set key = model ~ "|" ~ attack %}
+      {% set v = matrix.cells.get(key, "skipped") %}
+      <td class="{{ v }}">
+        {% if v == "vulnerable" %}VULN
+        {% elif v == "resistant" %}RES
+        {% elif v == "unclear" %}INC
+        {% elif v == "error" %}ERR
+        {% else %}·{% endif %}
+      </td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<!-- ── Per-Attack Details ─────────────────────────── -->
+<div class="page-break"></div>
+<h2>3. Détail par Scénario d'Attaque</h2>
+
+{% for attack in per_attack %}
+<div class="attack-card">
+  <div class="header">
+    <div>
+      <span class="rsk-id">{{ attack.rsk_id }}</span>
+      <h3 style="display:inline; margin-left:0.5rem;">{{ attack.title }}</h3>
+    </div>
+    <span class="severity severity-{{ attack.severity|lower|replace('é','e') }}">{{ attack.severity }}</span>
+  </div>
+
+  <p class="desc">{{ attack.description }}</p>
+
+  {% if attack.prompt %}
+  <h4>Prompt d'attaque</h4>
+  <div class="prompt-box">{{ attack.prompt }}</div>
+  {% endif %}
+
+  <h4>Résultats par modèle ({{ attack.total_tested }} testés)</h4>
+  <table class="mini-table">
+    <thead>
+      <tr><th>Modèle</th><th>Verdict</th><th>Indicateurs</th></tr>
+    </thead>
+    <tbody>
+      {% for r in attack.results %}
+      <tr>
+        <td>{{ r.model_id[:32] }}</td>
+        <td>
+          {% if r.verdict == "vulnerable" %}
+          <span class="badge badge-danger">{{ r.verdict_label }}</span>
+          {% elif r.verdict == "resistant" %}
+          <span class="badge badge-safe">{{ r.verdict_label }}</span>
+          {% elif r.verdict == "unclear" %}
+          <span class="badge badge-warn">{{ r.verdict_label }}</span>
+          {% else %}
+          <span class="badge badge-gray">{{ r.verdict_label }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if r.matched_indicators %}
+          {{ r.matched_indicators[:3]|join(', ') }}
+          {% elif r.error_message %}
+          <span style="color:#757575; font-size:0.75rem;">{{ r.error_message[:80] }}</span>
+          {% else %}
+          —
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if attack.vulnerable_count > 0 %}
+  <h4>Exemple de réponse vulnérable</h4>
+  {% set vuln_r = (attack.results | selectattr("verdict", "equalto", "vulnerable") | first) %}
+  {% if vuln_r and vuln_r.response %}
+  <div class="prompt-box">{{ vuln_r.response[:600] }}</div>
+  {% endif %}
+  {% endif %}
+
+  {% if attack.resistant_count > 0 %}
+  <h4>Exemple de réponse résistante</h4>
+  {% set resist_r = (attack.results | selectattr("verdict", "equalto", "resistant") | first) %}
+  {% if resist_r and resist_r.response %}
+  <div class="prompt-box">{{ resist_r.response[:600] }}</div>
+  {% endif %}
+  {% endif %}
+
+  {% if attack.mtr_reference %}
+  <div class="mtr">
+    <strong>{{ attack.mtr_reference }}</strong> — {{ attack.mtr_description }}
+  </div>
+  {% endif %}
+</div>
+{% endfor %}
+
+<!-- ── Recommendations ─────────────────────────────── -->
+<div class="page-break"></div>
+<h2>4. Recommandations</h2>
+<p style="color:#757575; font-size:0.9rem; margin-bottom:1rem;">
+  Mesures de traitement des risques (MTR) priorisées par sévérité des scénarios associés.
+</p>
+
+{% for rec in recommendations %}
+<div class="rec-card">
+  <div class="rec-ref">{{ rec.mtr_ref }}</div>
+  <div class="rec-desc">{{ rec.description }}</div>
+  <div class="rec-related">Scénarios concernés : {{ rec.related_attacks|join(', ') }}</div>
+</div>
+{% endfor %}
+
+{% if not recommendations %}
+<div class="empty-state">
+  <p>Aucune recommandation disponible — charger les définitions d'attaque pour générer les MTR.</p>
+</div>
+{% endif %}
+
+<!-- ── Footer ──────────────────────────────────────── -->
+<div class="footer">
+  <p>Generé par AI Risk Sentinel</p>
+  <p>Référence : ISO 42001:2023 — Système de Management de l'Intelligence Artificielle</p>
+  <p>Ce rapport est confidentiel et destiné exclusivement au client désigné.</p>
+</div>
+
+</div>
+
+</body>
+</html>

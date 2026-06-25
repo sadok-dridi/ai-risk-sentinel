@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}Results — AI Risk Sentinel{% endblock %}
+{% block content %}
+
+<h1>Run Results</h1>
+
+{% set pct_vuln = 0 %}
+{% if run.total_tests > 0 %}
+  {% set pct_vuln = (run.vulnerable_count / run.completed_tests * 100)|round(1) if run.completed_tests > 0 else 0 %}
+{% endif %}
+
+<div class="card" style="margin-bottom: 1rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <code>{{ run.id }}</code>
+      <span class="status-dot {{ run.status }}"></span>{{ run.status }}
+      <span style="color: var(--dim); margin-left: 1rem;">{{ run.created_at[:16] }}</span>
+    </div>
+    <div>
+      <a href="/report/{{ run.id }}" class="btn green">Download Report</a>
+      <a href="/policy/all" class="btn">Policy Docs</a>
+      <a href="/attacks" class="btn primary">New Run</a>
+    </div>
+  </div>
+
+  <div class="stat-grid" style="margin-top: 1rem;">
+    <div class="stat-card">
+      <div class="number dim">{{ run.total_tests }}</div>
+      <div class="label">Total Tests</div>
+    </div>
+    <div class="stat-card">
+      <div class="number red">{{ run.vulnerable_count }}</div>
+      <div class="label">Vulnerable</div>
+    </div>
+    <div class="stat-card">
+      <div class="number green">{{ run.resistant_count }}</div>
+      <div class="label">Resistant</div>
+    </div>
+    <div class="stat-card">
+      <div class="number dim">{{ run.error_count }}</div>
+      <div class="label">Errors</div>
+    </div>
+  </div>
+</div>
+
+<!-- Matrix -->
+<h2>Risk Matrix</h2>
+<div class="matrix-wrap card">
+  <table>
+    <thead>
+      <tr>
+        <th>Model</th>
+        {% for a in attacks %}
+        <th>{{ a[:12] }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for model in models %}
+      <tr>
+        <td>{{ model[:28] }}</td>
+        {% for attack in attacks %}
+        {% set v = lookup.get((model, attack), "error") %}
+        <td class="{{ v }}">
+          {% if v == "vulnerable" %}VULN
+          {% elif v == "resistant" %}RES
+          {% elif v == "unclear" %}UNC
+          {% else %}ERR{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Filters -->
+<h2>Detailed Results ({{ results|length }})</h2>
+<div class="filter-bar">
+  <span class="btn sm" onclick="filterResults('all')">All</span>
+  <span class="btn sm" onclick="filterResults('vulnerable')" style="color:var(--red);">Vuln</span>
+  <span class="btn sm" onclick="filterResults('resistant')" style="color:var(--green);">Res</span>
+  <span class="btn sm" onclick="filterResults('error')" style="color:var(--dim);">Err</span>
+</div>
+
+<div id="results-container">
+  {% for r in results %}
+  <div class="result-card result-{{ r.verdict }}">
+    <div class="header">
+      <div>
+        <strong>{{ r.model_id }}</strong>
+        <span style="color: var(--dim); margin: 0 0.5rem;">←</span>
+        <strong>{{ r.attack_id }}</strong>
+        <span style="color: var(--dim); font-size: 0.75rem; margin-left: 0.5rem;">{{ r.rsk_id }}</span>
+      </div>
+      <span class="badge {{ r.verdict }}">{{ r.verdict.upper() }}</span>
+    </div>
+
+    {% if r.prompt %}
+    <h4 style="margin:0.5rem 0 0.2rem;font-size:0.8rem;color:var(--dim);">Prompt</h4>
+    <div class="prompt-box">{{ r.prompt[:300] }}</div>
+    {% endif %}
+
+    {% if r.response %}
+    <h4 style="margin:0.5rem 0 0.2rem;font-size:0.8rem;color:var(--dim);">Response</h4>
+    <div class="prompt-box">{{ r.response[:600] }}</div>
+    {% endif %}
+
+    {% if r.error_message %}
+    <p style="color: var(--red); font-size: 0.8rem;">{{ r.error_message[:200] }}</p>
+    {% endif %}
+
+    <p style="font-size:0.75rem;color:var(--dim);margin-top:0.4rem;">
+      {{ "%.0f"|format(r.elapsed_ms) }}ms ·
+      indicators: {{ r.matched_indicators|join(', ') if r.matched_indicators else '—' }}
+    </p>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+function filterResults(type) {
+  document.querySelectorAll('.result-card').forEach(function(card) {
+    if (type === 'all' || card.classList.contains('result-' + type)) {
+      card.style.display = '';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+</script>
+
+{% endblock %}

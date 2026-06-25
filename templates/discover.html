@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Models — AI Risk Sentinel{% endblock %}
+{% block content %}
+
+<h1>Model Discovery</h1>
+<p style="color: var(--dim); margin-bottom: 1rem;">
+  Queries configured API endpoints to discover available models. Models are cached for the session.
+</p>
+
+<div style="margin-bottom: 1rem;">
+  <button class="btn primary"
+          hx-post="/discover"
+          hx-target="#model-list"
+          hx-indicator="#discover-spinner">
+    Discover Models
+  </button>
+  <span id="discover-spinner" class="htmx-indicator" style="color: var(--dim); margin-left: 0.5rem;">
+    Querying APIs...
+  </span>
+</div>
+
+<div id="model-list">
+  {% include "partials/model_list.html" %}
+</div>
+
+{% endblock %}

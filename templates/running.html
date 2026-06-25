@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Running — AI Risk Sentinel{% endblock %}
+{% block head %}
+<!-- HTMX SSE extension -->
+<script>
+  // Simple SSE-based live updates (no extra extension needed)
+  document.addEventListener('DOMContentLoaded', function() {
+    var runId = '{{ run.id }}';
+    var feed = document.getElementById('run-feed');
+    var progressFill = document.getElementById('progress-fill');
+    var progressText = document.getElementById('progress-text');
+    var statusLabel = document.getElementById('status-label');
+    var vulnCount = document.getElementById('vuln-count');
+    var resCount = document.getElementById('res-count');
+    var errCount = document.getElementById('err-count');
+
+    var evtSource = new EventSource('/run/' + runId + '/stream');
+    var count = 0;
+    var vuln = 0, resist = 0, errs = 0;
+
+    evtSource.addEventListener('result', function(e) {
+      var data = JSON.parse(e.data);
+      count++;
+
+      var cls = 'entry err';
+      if (data.verdict === 'vulnerable') { cls = 'entry vuln'; vuln++; }
+      else if (data.verdict === 'resistant') { cls = 'entry safe'; resist++; }
+      else { errs++; }
+
+      var line = document.createElement('div');
+      line.className = cls;
+      line.textContent = '[' + data.verdict.toUpperCase().slice(0,4) + '] ' +
+                         data.model_id + ' ← ' + data.attack_id;
+      feed.appendChild(line);
+      feed.scrollTop = feed.scrollHeight;
+
+      var pct = Math.round(count / {{ run.total_tests or 1 }} * 100);
+      progressFill.style.width = pct + '%';
+      progressText.textContent = count + ' / {{ run.total_tests }} (' + pct + '%)';
+      vulnCount.textContent = vuln;
+      resCount.textContent = resist;
+      errCount.textContent = errs;
+    });
+
+    evtSource.addEventListener('done', function(e) {
+      var data = JSON.parse(e.data);
+      progressFill.classList.add('done');
+      progressFill.style.width = '100%';
+      statusLabel.innerHTML = '<span class="status-dot done"></span> Completed';
+      progressText.textContent = '{{ run.total_tests }} / {{ run.total_tests }} (100%)';
+
+      // Show results link
+      document.getElementById('post-run').innerHTML =
+        '<a href="/results/' + data.run_id + '" class="btn primary">View Results</a> ' +
+        '<a href="/report/' + data.run_id + '" class="btn">Download Report</a>';
+
+      evtSource.close();
+    });
+
+    evtSource.addEventListener('error', function(e) {
+      try {
+        var data = JSON.parse(e.data);
+        feed.innerHTML += '<div class="entry err">ERROR: ' + data.message + '</div>';
+      } catch(_) {}
+      statusLabel.innerHTML = '<span class="status-dot error"></span> Failed';
+      evtSource.close();
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+
+<h1>Attack Run in Progress</h1>
+
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+      <span id="status-label"><span class="status-dot running"></span> Running</span>
+      <code style="margin-left: 1rem; font-size: 0.8rem;">{{ run.id }}</code>
+    </div>
+    <div id="post-run"></div>
+  </div>
+
+  {% include "partials/progress.html" %}
+</div>
+
+<div class="stat-grid" style="margin: 1rem 0;">
+  <div class="stat-card">
+    <div class="number red" id="vuln-count">0</div>
+    <div class="label">Vulnerable</div>
+  </div>
+  <div class="stat-card">
+    <div class="number green" id="res-count">0</div>
+    <div class="label">Resistant</div>
+  </div>
+  <div class="stat-card">
+    <div class="number dim" id="err-count">0</div>
+    <div class="label">Errors</div>
+  </div>
+</div>
+
+<h2>Live Feed</h2>
+<div class="run-feed" id="run-feed">
+  <div class="entry dim">Waiting for results...</div>
+</div>
+
+{% endblock %}

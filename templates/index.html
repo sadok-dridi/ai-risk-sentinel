@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — AI Risk Sentinel{% endblock %}
+{% block content %}
+
+<h1>Dashboard</h1>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="number dim">{{ runs|length }}</div>
+    <div class="label">Total Runs</div>
+  </div>
+  <div class="stat-card">
+    <div class="number green">{{ runs|selectattr("status", "equalto", "done")|list|length }}</div>
+    <div class="label">Completed</div>
+  </div>
+  {% if last_run %}
+  <div class="stat-card">
+    <div class="number red">{{ last_run.vulnerable_count }}</div>
+    <div class="label">Vulnerable (last)</div>
+  </div>
+  <div class="stat-card">
+    <div class="number green">{{ last_run.resistant_count }}</div>
+    <div class="label">Resistant (last)</div>
+  </div>
+  {% endif %}
+</div>
+
+<div style="display: flex; gap: 1rem; margin: 1.5rem 0;">
+  <a href="/discover" class="btn primary">Discover Models</a>
+  <a href="/attacks" class="btn primary">New Attack Run</a>
+</div>
+
+{% if last_run %}
+<div class="card">
+  <h2>Last Run</h2>
+  <table>
+    <tr><td style="width:140px; color: var(--dim);">Run ID</td><td><code>{{ last_run.id }}</code></td></tr>
+    <tr><td style="width:140px; color: var(--dim);">Client</td><td>{{ last_run.client }}</td></tr>
+    <tr><td style="width:140px; color: var(--dim);">Status</td><td>
+      <span class="status-dot {{ last_run.status }}"></span>{{ last_run.status }}
+    </td></tr>
+    <tr><td style="width:140px; color: var(--dim);">Tests</td><td>{{ last_run.completed_tests }} / {{ last_run.total_tests }}</td></tr>
+    <tr><td style="width:140px; color: var(--dim);">Result</td><td>
+      <span class="badge vulnerable">{{ last_run.vulnerable_count }} VULN</span>
+      <span class="badge resistant">{{ last_run.resistant_count }} RES</span>
+      <span class="badge error">{{ last_run.error_count }} ERR</span>
+    </td></tr>
+    <tr><td style="width:140px; color: var(--dim);">Date</td><td>{{ last_run.created_at }}</td></tr>
+  </table>
+
+  <div style="margin-top: 0.8rem; display: flex; gap: 0.5rem;">
+    {% if last_run.status == "done" %}
+    <a href="/results/{{ last_run.id }}" class="btn">View Results</a>
+    <a href="/report/{{ last_run.id }}" class="btn">Download Report</a>
+    <a href="/policy/all" class="btn">Policy Docs</a>
+    {% elif last_run.status == "running" %}
+    <a href="/run/{{ last_run.id }}" class="btn primary">Watch Live</a>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="empty">
+  <div class="icon">&#9889;</div>
+  <p>No runs yet. Start by discovering models and launching an attack.</p>
+  <div style="margin-top: 1rem;">
+    <a href="/discover" class="btn primary">Get Started →</a>
+  </div>
+</div>
+{% endif %}
+
+{% if runs|length > 1 %}
+<h2 style="margin-top:2rem;">Recent Runs</h2>
+<table>
+  <thead>
+    <tr><th>ID</th><th>Client</th><th>Status</th><th>Vuln</th><th>Res</th><th>Date</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for r in runs[1:6] %}
+    <tr>
+      <td><code>{{ r.id }}</code></td>
+      <td>{{ r.client }}</td>
+      <td><span class="status-dot {{ r.status }}"></span>{{ r.status }}</td>
+      <td>{{ r.vulnerable_count }}</td>
+      <td>{{ r.resistant_count }}</td>
+      <td style="color:var(--dim);">{{ r.created_at[:16] }}</td>
+      <td>
+        {% if r.status == "done" %}
+        <a href="/results/{{ r.id }}" class="btn sm">Results</a>
+        {% elif r.status == "running" %}
+        <a href="/run/{{ r.id }}" class="btn sm">Live</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{% endblock %}

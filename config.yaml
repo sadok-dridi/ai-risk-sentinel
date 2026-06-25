@@ -1,0 +1,90 @@
+# AI Risk Sentinel — Configuration
+# ========================================
+# API keys: use ${ENV_VAR} syntax for environment variable substitution.
+# Override via CLI: --api-key, --base-url, --provider
+
+providers:
+  # OpenCode Zen/Go — curated models via https://opencode.ai/zen/v1
+  # Docs: https://opencode.ai/docs/zen/
+  # Models endpoint: GET /models
+  # Chat endpoint: POST /chat/completions (OpenAI-compatible for most models)
+  - name: opencode
+    type: openai-compatible
+    base_url: "${OPENCODE_BASE_URL:-https://opencode.ai/zen/v1}"
+    api_key: "${OPENCODE_API_KEY:-sk-8u8CzbeE4RC7JxQ7fA7Hds5zHthzcFMMCaGxFh4tmX99xuHzShSG4ls0wdPPryci}"
+    enabled: true
+
+  # Local Ollama (for offline demos)
+  - name: ollama
+    type: ollama
+    base_url: "${OLLAMA_BASE_URL:-http://localhost:11434}"
+    enabled: false
+
+  # External API example — uncomment and configure
+  # - name: openai
+  #   type: openai-compatible
+  #   base_url: https://api.openai.com/v1
+  #   api_key: "${OPENAI_API_KEY:-}"
+  #   enabled: false
+
+  # - name: mistral
+  #   type: openai-compatible
+  #   base_url: https://api.mistral.ai/v1
+  #   api_key: "${MISTRAL_API_KEY:-}"
+  #   enabled: false
+
+# Attack scenarios
+attacks:
+  # Core attacks — run on ALL models
+  core:
+    - injection       # RSK-IA-04: Prompt injection
+    - jailbreak       # RSK-IA-05: Jailbreak
+    - secrets         # RSK-IA-19: Secret leakage
+    - dataleak        # RSK-IA-02: Data leakage
+
+  # Targeted attacks — run on matching models only
+  targeted:
+    hallucination:    # RSK-IA-07: only on reasoning/premium
+      model_patterns: ["*deepseek*pro*", "*glm*", "*gpt-5.5*", "*claude-opus*"]
+    phishing:         # RSK-IA-12: all text models
+      model_patterns: []
+    toxic:            # RSK-IA-27: sample subset
+      model_patterns: ["*deepseek*pro*", "*qwen3.6-plus*", "*grok*"]
+
+# DLP / secret scanning patterns (client-side pre-check)
+scanning:
+  enabled: true
+  block_on_hit: false              # warn but don't block (false) or block completely (true)
+  secrets:
+    - name: Stripe Live Key
+      pattern: "sk_live_[a-zA-Z0-9]{24,}"
+      severity: critical
+    - name: Stripe Test Key
+      pattern: "sk_test_[a-zA-Z0-9]{24,}"
+      severity: high
+    - name: AWS Access Key
+      pattern: "AKIA[0-9A-Z]{16}"
+      severity: critical
+    - name: GitHub Token
+      pattern: "(?:ghp|gho|ghu|ghs|ghr)_[a-zA-Z0-9]{36,}"
+      severity: high
+    - name: JWT Token
+      pattern: "eyJ[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,}"
+      severity: medium
+    - name: Generic API Key
+      pattern: "(?:api[_-]?key|apikey|api_secret)[\\s]*[=:][\\s]*['\"]?[a-zA-Z0-9_\\-]{20,}['\"]?"
+      severity: high
+  pii:
+    - name: IBAN
+      pattern: "[A-Z]{2}\\d{2}[A-Z0-9]{1,30}"
+    - name: Credit Card
+      pattern: "\\d{4}[-\\s]?\\d{4}[-\\s]?\\d{4}[-\\s]?\\d{4}"
+    - name: Email (personal)
+      pattern: "[a-z0-9._%+-]+@(?:gmail|yahoo|hotmail|outlook|live)\\.(?:com|fr)"
+
+# Output
+output:
+  results_dir: "./results"
+  reports_dir: "./reports"
+  save_raw_responses: true
+  format: [terminal, json]
