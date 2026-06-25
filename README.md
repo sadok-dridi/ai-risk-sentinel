@@ -42,18 +42,18 @@ The tool sends attack prompts to multiple AI models simultaneously, classifies r
 
 ```
 ┌───────────────────────────────────────────────────────────┐
-│                    Browser (HTMX + SSE)                     │
-│  /dashboard  /discover  /attacks  /running  /results       │
+│                    Browser (HTMX + SSE)                   │
+│  /dashboard  /discover  /attacks  /running  /results      │
 └──────────────────────┬────────────────────────────────────┘
                        │ HTTP + SSE
 ┌──────────────────────▼────────────────────────────────────┐
-│                   FastAPI (uvicorn)                         │
-│  Jinja2 templates → server-rendered HTML                   │
-│  SSE streaming → live attack progress                      │
+│                   FastAPI (uvicorn)                       │
+│  Jinja2 templates → server-rendered HTML                  │
+│  SSE streaming → live attack progress                     │
 └──────┬────────────────────────────────────────────────────┘
        │              │                │
-┌──────▼──┐   ┌───────▼──────┐   ┌─────▼──────────────┐
-│ SQLite   │   │ AttackRunner │   │ LLM Provider API   │
+┌──────▼───┐   ┌───────▼──────┐   ┌─────▼───────────────┐
+│ SQLite   │   │ AttackRunner │   │ LLM Provider API    │
 │ (runs,   │   │ (7 attacks × │   │ /v1/chat/completions│
 │  results)│   │  N models)   │   │                     │
 └──────────┘   └──────────────┘   └─────────────────────┘
