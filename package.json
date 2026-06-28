@@ -1,0 +1,26 @@
+{
+  "name": "demo2",
+  "version": "1.0.0",
+  "description": "<p align=\"center\">   <h1 align=\"center\">AI Risk Sentinel</h1>   <p align=\"center\">     <strong>ISO 42001 Adversarial Testing Platform</strong><br>     Multi-provider LLM safety evaluation with a live web dashboard.   </p> </p>",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tailwindcss --input static/input.css --output static/styles.css",
+    "watch": "tailwindcss --input static/input.css --output static/styles.css --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sadok-dridi/ai-risk-sentinel.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/sadok-dridi/ai-risk-sentinel/issues"
+  },
+  "homepage": "https://github.com/sadok-dridi/ai-risk-sentinel#readme",
+  "dependencies": {
+    "@tailwindcss/cli": "^4.3.1",
+    "tailwindcss": "^4.3.1"
+  }
+}

@@ -1,130 +1,185 @@
 {% extends "base.html" %}
 {% block title %}Dashboard — AI Risk Sentinel{% endblock %}
+{% block header_title %}DASHBOARD{% endblock %}
+{% block header_icon %}&#9632;{% endblock %}
+{% block header_actions %}
+<div class="flex items-center border rounded-sm overflow-hidden" style="border-color: var(--color-border);">
+  <a href="/discover" class="px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase transition-colors hover:bg-[color-mix(in_srgb,var(--color-midground)_10%,transparent)] border-r" style="border-color: var(--color-border);">DISCOVER</a>
+  <a href="/attacks" class="px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase transition-colors bg-[var(--color-foreground)] text-[#000] hover:bg-white">NEW RUN</a>
+</div>
+{% endblock %}
+
 {% block content %}
 
-<div class="page-header">
-  <div>
-    <h1>Dashboard</h1>
-    <p class="page-desc">Overview of your AI risk assessment environment.</p>
-  </div>
-  <div class="header-actions">
-    <a href="/discover" class="btn">Discover Models</a>
-    <a href="/attacks" class="btn primary">New Attack Run</a>
-  </div>
-</div>
+<!-- Settings / Overview Panel -->
+<section class="flex flex-col lg:flex-row border mb-8 bg-[color-mix(in_srgb,var(--color-card)_40%,transparent)]" style="border-color: var(--color-border);">
+  <div class="flex-[2] p-6 lg:p-8 lg:border-r border-dashed" style="border-color: var(--color-border);">
+    <div class="flex items-baseline mb-6">
+      <h3 class="text-xs font-bold tracking-widest uppercase font-mono text-[var(--color-foreground)]"><span class="mr-2 text-[var(--color-midground)]">&#9881;</span> ENVIRONMENT SETTINGS</h3>
+      <span class="ml-4 text-[10px] opacity-60 uppercase tracking-widest">applies to new attack runs</span>
+    </div>
+    
+    <div class="flex justify-between items-center py-4 border-b" style="border-color: var(--color-border);">
+      <div class="flex flex-col">
+        <span class="text-[10px] opacity-60 uppercase tracking-widest mb-1"><span class="mr-1">&#9733;</span> ACTIVE PROVIDERS</span>
+        <span class="text-sm text-[var(--color-foreground)]">{{ ok_providers }} connected ({{ provider_count }} total)</span>
+      </div>
+      <a href="/settings" class="px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase rounded-sm bg-[color-mix(in_srgb,var(--color-foreground)_90%,#fff)] text-[#000] hover:bg-white transition-colors">MANAGE</a>
+    </div>
 
-<div class="stat-grid">
-  <div class="stat-card">
-    <div class="number accent">{{ provider_count }}</div>
-    <div class="label">Providers</div>
-    <div class="sub-label">{{ ok_providers }} connected</div>
-  </div>
-  <div class="stat-card">
-    <div class="number accent">{{ model_count }}</div>
-    <div class="label">Models</div>
-    <div class="sub-label">discovered</div>
-  </div>
-  <div class="stat-card">
-    <div class="number dim">{{ runs|length }}</div>
-    <div class="label">Total Runs</div>
-  </div>
-  {% if last_run %}
-  <div class="stat-card">
-    <div class="number red">{{ last_run.vulnerable_count }}</div>
-    <div class="label">Vulnerabilities</div>
-    <div class="sub-label">last run</div>
-  </div>
-  {% endif %}
-</div>
+    <div class="flex justify-between items-center py-4 border-b" style="border-color: var(--color-border);">
+      <div class="flex flex-col">
+        <span class="text-[10px] opacity-60 uppercase tracking-widest mb-1"><span class="mr-1">&#9889;</span> DISCOVERED MODELS</span>
+        <span class="text-sm text-[var(--color-foreground)]">{{ model_count }} available for testing</span>
+      </div>
+      <a href="/discover" class="px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase rounded-sm border transition-colors hover:bg-[color-mix(in_srgb,var(--color-foreground)_5%,transparent)]" style="border-color: var(--color-foreground); color: var(--color-foreground);">DISCOVER</a>
+    </div>
 
-<!-- Provider summary -->
-{% if providers %}
-<div class="card">
-  <h2>Providers</h2>
-  <div class="provider-mini-grid">
-    {% for p in providers %}
-    <div class="provider-mini">
-      <span class="status-dot {% if p.test_status and p.test_status.startswith('ok') %}done{% elif p.test_status %}error{% else %}pending{% endif %}"></span>
-      <div>
-        <strong>{{ p.name }}</strong>
-        <span class="dim" style="font-size:0.75rem;">
-          {% if p.model_count > 0 %}{{ p.model_count }} models{% else %}Not connected{% endif %}
-        </span>
+    <div class="flex justify-between items-center py-4">
+      <div class="flex flex-col">
+        <span class="text-[10px] opacity-60 uppercase tracking-widest mb-1"><span class="mr-1">&#9776;</span> COMPLIANCE ENGINE</span>
+        <span class="text-sm text-[var(--color-foreground)]">ISO 42001 (RSK-IA-01 → RSK-IA-30)</span>
+      </div>
+      <a href="/policy/all" class="px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase rounded-sm border transition-colors hover:bg-[color-mix(in_srgb,var(--color-foreground)_5%,transparent)]" style="border-color: var(--color-foreground); color: var(--color-foreground);">POLICY DOCS</a>
+    </div>
+  </div>
+  
+  <div class="flex-[1] p-6 lg:p-8 flex flex-col justify-center">
+    <div class="flex justify-between mb-8">
+      <div class="flex flex-col items-start">
+        <span class="text-4xl font-light text-[var(--color-foreground)] leading-none mb-2 font-mono">{{ runs|length }}</span>
+        <span class="text-[9px] opacity-60 uppercase tracking-widest">TOTAL RUNS</span>
+      </div>
+      <div class="flex flex-col items-start">
+        {% if last_run %}
+        <span class="text-4xl font-light text-[var(--color-destructive)] leading-none mb-2 font-mono">{{ last_run.vulnerable_count }}</span>
+        <span class="text-[9px] opacity-60 uppercase tracking-widest">LATEST VULNS</span>
+        {% else %}
+        <span class="text-4xl font-light text-[var(--color-foreground)] leading-none mb-2 font-mono">0</span>
+        <span class="text-[9px] opacity-60 uppercase tracking-widest">LATEST VULNS</span>
+        {% endif %}
       </div>
     </div>
-    {% endfor %}
+    <p class="text-[10px] leading-relaxed opacity-60 font-mono">
+      Analytics metrics track the number of adversarial prompts successfully submitted and classified. 
+      Enable <code class="bg-[color-mix(in_srgb,var(--color-foreground)_10%,transparent)] px-1 rounded text-[var(--color-foreground)]">detailed_logs</code> in Config to capture full token usage and exact request durations.
+    </p>
   </div>
-  <a href="/settings" class="btn sm" style="margin-top:0.5rem;">Manage Providers</a>
-</div>
-{% endif %}
+</section>
 
+<!-- Last Run Matrix / Recent Runs -->
 {% if last_run %}
-<div class="card">
-  <div class="card-header">
-    <h2>Last Run</h2>
-    <span class="badge {{ last_run.status }}">{{ last_run.status }}</span>
+<div class="mb-8">
+  <div class="flex justify-between items-center mb-4">
+    <h3 class="text-xs font-bold tracking-widest uppercase font-mono text-[var(--color-foreground)]">LATEST RUN OVERVIEW</h3>
+    <span class="badge badge-{{ last_run.status }} px-2 py-1 uppercase text-[9px]">{{ last_run.status }}</span>
   </div>
-  <table>
-    <tr><td style="width:140px; color: var(--dim);">Run ID</td><td><code>{{ last_run.id }}</code></td></tr>
-    <tr><td style="width:140px; color: var(--dim);">Client</td><td>{{ last_run.client }}</td></tr>
-    <tr><td style="width:140px; color: var(--dim);">Progress</td><td>{{ last_run.completed_tests }} / {{ last_run.total_tests }} tests</td></tr>
-    <tr><td style="width:140px; color: var(--dim);">Results</td><td>
-      <span class="badge vulnerable">{{ last_run.vulnerable_count }} VULN</span>
-      <span class="badge resistant">{{ last_run.resistant_count }} RES</span>
-      <span class="badge error">{{ last_run.error_count }} ERR</span>
-    </td></tr>
-    <tr><td style="width:140px; color: var(--dim);">Date</td><td>{{ last_run.created_at }}</td></tr>
-  </table>
-
-  <div style="margin-top: 0.8rem; display: flex; gap: 0.5rem;">
-    {% if last_run.status == "done" %}
-    <a href="/results/{{ last_run.id }}" class="btn">View Results</a>
-    <a href="/report/{{ last_run.id }}" class="btn green">Download Report</a>
-    <a href="/policy/all" class="btn">Policy Docs</a>
-    {% elif last_run.status == "running" %}
-    <a href="/run/{{ last_run.id }}" class="btn primary">Watch Live</a>
-    {% endif %}
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+    <div class="col-span-1 border p-5 bg-[var(--color-card)] relative overflow-hidden group transition-all hover:border-[var(--color-midground)]" style="border-color: var(--color-border);">
+      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.02)] to-transparent -translate-x-[150%] skew-x-[-20deg] group-hover:translate-x-[150%] transition-transform duration-700"></div>
+      <h4 class="text-[11px] font-bold text-[var(--color-foreground)] uppercase tracking-wider mb-4 font-mono">RUN: {{ last_run.id[:8] }}...</h4>
+      <div class="flex justify-between text-[10px] opacity-60 mb-2"><span>Client:</span> <span class="text-[var(--color-foreground)]">{{ last_run.client }}</span></div>
+      <div class="flex justify-between text-[10px] opacity-60 mb-2"><span>Progress:</span> <span class="text-[var(--color-foreground)]">{{ last_run.completed_tests }}/{{ last_run.total_tests }}</span></div>
+      <div class="flex justify-between text-[10px] opacity-60 mb-4"><span>Date:</span> <span class="text-[var(--color-foreground)]">{{ last_run.created_at[:16] }}</span></div>
+      <div class="flex gap-2">
+        {% if last_run.status == "done" %}
+        <a href="/results/{{ last_run.id }}" class="flex-1 text-center border py-1.5 text-[9px] font-bold tracking-widest uppercase transition-colors hover:bg-[color-mix(in_srgb,var(--color-foreground)_5%,transparent)]" style="border-color: var(--color-foreground); color: var(--color-foreground);">RESULTS</a>
+        <a href="/report/{{ last_run.id }}" class="flex-1 text-center py-1.5 text-[9px] font-bold tracking-widest uppercase transition-colors bg-[var(--color-success)] text-[#000]">REPORT</a>
+        {% elif last_run.status == "running" %}
+        <a href="/run/{{ last_run.id }}" class="w-full text-center py-1.5 text-[9px] font-bold tracking-widest uppercase transition-colors bg-[var(--color-midground)] text-[#000]">WATCH LIVE</a>
+        {% endif %}
+      </div>
+    </div>
+    
+    <div class="col-span-2 border p-5 bg-[var(--color-card)]" style="border-color: var(--color-border);">
+      <h4 class="text-[11px] font-bold text-[var(--color-foreground)] uppercase tracking-wider mb-4 font-mono">VERDICT BREAKDOWN</h4>
+      <div class="flex h-16 w-full rounded overflow-hidden">
+        {% set total = last_run.vulnerable_count + last_run.resistant_count + last_run.error_count %}
+        {% if total > 0 %}
+          <div class="bg-[var(--color-destructive)] h-full transition-all flex items-center justify-center font-mono text-xs font-bold text-[#000]" style="width: {{ (last_run.vulnerable_count / total * 100)|round }}%;">
+            {% if (last_run.vulnerable_count / total * 100) > 10 %}{{ last_run.vulnerable_count }}{% endif %}
+          </div>
+          <div class="bg-[var(--color-success)] h-full transition-all flex items-center justify-center font-mono text-xs font-bold text-[#000]" style="width: {{ (last_run.resistant_count / total * 100)|round }}%;">
+            {% if (last_run.resistant_count / total * 100) > 10 %}{{ last_run.resistant_count }}{% endif %}
+          </div>
+          <div class="bg-[color-mix(in_srgb,var(--color-foreground)_20%,var(--color-base))] h-full transition-all flex items-center justify-center font-mono text-xs font-bold text-[#fff]" style="width: {{ (last_run.error_count / total * 100)|round }}%;">
+            {% if (last_run.error_count / total * 100) > 10 %}{{ last_run.error_count }}{% endif %}
+          </div>
+        {% else %}
+          <div class="bg-[color-mix(in_srgb,var(--color-border)_50%,transparent)] w-full h-full flex items-center justify-center text-[10px] uppercase tracking-widest opacity-50">NO RESULTS YET</div>
+        {% endif %}
+      </div>
+      <div class="flex gap-4 mt-4 text-[9px] uppercase tracking-widest font-bold">
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[var(--color-destructive)]"></span> VULNERABLE (LEAK)</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[var(--color-success)]"></span> RESISTANT (SAFE)</div>
+        <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[color-mix(in_srgb,var(--color-foreground)_20%,var(--color-base))]"></span> ERRORS</div>
+      </div>
+    </div>
   </div>
 </div>
 {% else %}
-<div class="empty">
-  <div class="icon">&#9889;</div>
-  <h3>Welcome to AI Risk Sentinel</h3>
-  <p>No runs yet. Start by configuring a provider, discovering models, and launching an attack run.</p>
-  <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;">
-    <a href="/settings" class="btn">1. Configure Provider</a>
-    <a href="/discover" class="btn">2. Discover Models</a>
-    <a href="/attacks" class="btn primary">3. Launch Attack Run</a>
+<div class="border border-dashed p-12 text-center flex flex-col items-center justify-center mb-8" style="border-color: var(--color-border);">
+  <div class="text-3xl opacity-30 mb-4">&#9889;</div>
+  <h3 class="text-sm font-bold uppercase tracking-widest mb-2 font-mono">No Active Runs</h3>
+  <p class="text-[11px] opacity-60 max-w-md mb-6">Your dashboard is empty. Configure a provider, discover models, and launch your first adversarial test run.</p>
+  <div class="flex gap-3">
+    <a href="/settings" class="px-4 py-1.5 text-[9px] font-bold tracking-widest uppercase border transition-colors hover:bg-[color-mix(in_srgb,var(--color-foreground)_5%,transparent)]" style="border-color: var(--color-foreground);">1. CONFIG PROVIDER</a>
+    <a href="/discover" class="px-4 py-1.5 text-[9px] font-bold tracking-widest uppercase border transition-colors hover:bg-[color-mix(in_srgb,var(--color-foreground)_5%,transparent)]" style="border-color: var(--color-foreground);">2. DISCOVER</a>
+    <a href="/attacks" class="px-4 py-1.5 text-[9px] font-bold tracking-widest uppercase bg-[var(--color-foreground)] text-[#000] hover:bg-white transition-colors">3. LAUNCH RUN</a>
   </div>
 </div>
 {% endif %}
 
-{% if runs|length > 1 %}
-<h2 style="margin-top:2rem;">Recent Runs</h2>
-<table>
-  <thead>
-    <tr><th>ID</th><th>Client</th><th>Status</th><th>Vuln</th><th>Res</th><th>Date</th><th></th></tr>
-  </thead>
-  <tbody>
-    {% for r in runs[1:6] %}
-    <tr>
-      <td><code>{{ r.id }}</code></td>
-      <td>{{ r.client }}</td>
-      <td><span class="status-dot {{ r.status }}"></span>{{ r.status }}</td>
-      <td><span class="badge vulnerable">{{ r.vulnerable_count }}</span></td>
-      <td><span class="badge resistant">{{ r.resistant_count }}</span></td>
-      <td style="color:var(--dim);font-size:0.8rem;">{{ r.created_at[:16] }}</td>
-      <td>
-        {% if r.status == "done" %}
-        <a href="/results/{{ r.id }}" class="btn sm">Results</a>
-        {% elif r.status == "running" %}
-        <a href="/run/{{ r.id }}" class="btn sm primary">Live</a>
+<!-- Providers Grid (Hermes Style Cards) -->
+{% if providers %}
+<h3 class="text-xs font-bold tracking-widest uppercase font-mono text-[var(--color-foreground)] mb-4">ACTIVE PROVIDERS</h3>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+  {% for p in providers %}
+  <div class="border bg-[var(--color-card)] p-5 relative overflow-hidden transition-all hover:border-[var(--color-midground)] hover:-translate-y-[2px] group" style="border-color: var(--color-border); box-shadow: var(--shadow-card);">
+    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.02)] to-transparent -translate-x-[150%] skew-x-[-20deg] group-hover:translate-x-[150%] transition-transform duration-700"></div>
+    <div class="flex justify-between items-start mb-4">
+      <h4 class="text-[12px] font-bold text-[var(--color-foreground)] uppercase tracking-wider font-mono">
+        {{ p.name }}
+        {% if p.test_status and p.test_status.startswith('ok') %}
+        <span class="inline-block ml-2 px-1.5 py-0.5 bg-[var(--color-foreground)] text-[#000] text-[8px] align-middle rounded-sm">ACTIVE</span>
         {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+      </h4>
+      <div class="flex flex-col items-end">
+        <span class="text-xl font-light text-[var(--color-foreground)] leading-none font-mono mb-1">{{ p.model_count }}</span>
+        <span class="text-[8px] uppercase tracking-widest opacity-60">MODELS</span>
+      </div>
+    </div>
+    
+    <div class="flex flex-wrap gap-1.5 mb-6">
+      <span class="text-[9px] opacity-60 border px-1.5 py-0.5 rounded-sm" style="border-color: var(--color-border);">API V1</span>
+      {% if p.model_count > 0 %}
+      <span class="text-[9px] opacity-60 border px-1.5 py-0.5 rounded-sm" style="border-color: var(--color-border);">DISCOVERED</span>
+      {% endif %}
+    </div>
+    
+    <div class="flex justify-end mb-4">
+      <a href="/settings" class="border px-3 py-1 text-[9px] font-bold tracking-widest uppercase transition-colors hover:bg-[color-mix(in_srgb,var(--color-foreground)_5%,transparent)]" style="border-color: var(--color-foreground); color: var(--color-foreground);">
+        MANAGE <span class="ml-1 opacity-50">&#9662;</span>
+      </a>
+    </div>
+    
+    <div class="flex justify-between items-center text-[9px] uppercase tracking-widest mt-auto border-t pt-3" style="border-color: color-mix(in srgb, var(--color-border) 50%, transparent);">
+      <div class="flex gap-2">
+        {% if p.test_status and p.test_status.startswith('ok') %}
+        <span class="px-1.5 py-0.5 rounded-sm text-[var(--color-success)] border border-[color-mix(in_srgb,var(--color-success)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-success)_10%,transparent)] flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]"></span> CONNECTED
+        </span>
+        {% else %}
+        <span class="px-1.5 py-0.5 rounded-sm text-[var(--color-destructive)] border border-[color-mix(in_srgb,var(--color-destructive)_30%,transparent)] bg-[color-mix(in_srgb,var(--color-destructive)_10%,transparent)] flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--color-destructive)]"></span> ERROR
+        </span>
+        {% endif %}
+      </div>
+      <span class="opacity-50">Local Engine</span>
+    </div>
+  </div>
+  {% endfor %}
+</div>
 {% endif %}
 
 {% endblock %}

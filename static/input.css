@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+@theme {
+  /* Base colors - dark cyberpunk teal palette */
+  --color-base: #050a08;
+  --color-surface: #020403;
+  --color-midground: #5eead4;
+  --color-foreground: #ecfdf5;
+
+  /* Semantic colors via color-mix */
+  --color-primary: var(--color-midground);
+  --color-primary-foreground: var(--color-base);
+  --color-card: color-mix(in srgb, var(--color-midground) 1.5%, var(--color-base));
+  --color-card-foreground: var(--color-midground);
+  --color-muted: color-mix(in srgb, var(--color-midground) 2%, var(--color-base));
+  --color-muted-foreground: color-mix(in srgb, var(--color-midground) 45%, transparent);
+  --color-secondary: color-mix(in srgb, var(--color-midground) 3%, var(--color-base));
+  --color-accent: color-mix(in srgb, var(--color-midground) 4%, var(--color-base));
+  --color-accent-foreground: var(--color-midground);
+  --color-border: color-mix(in srgb, var(--color-midground) 7%, transparent);
+  --color-input: color-mix(in srgb, var(--color-midground) 7%, transparent);
+  --color-ring: var(--color-midground);
+  --color-text-secondary: color-mix(in srgb, var(--color-midground) 70%, transparent);
+
+  /* Status colors */
+  --color-destructive: #fb2c36;
+  --color-destructive-foreground: #fff;
+  --color-success: #4ade80;
+  --color-warning: #ffbd38;
+
+  /* Fonts */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* Radius */
+  --radius: 0.5rem;
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-xs: calc(var(--radius) - 4px);
+
+  /* Shadows */
+  --shadow-bevel: inset -1px -1px 0 0 rgba(0,0,0,0.5), inset 1px 1px 0 0 rgba(255,255,255,0.07);
+  --shadow-bevel-strong: inset -1px -1px 0 0 rgba(0,0,0,0.5), inset 1px 1px 0 0 rgba(255,255,255,0.16);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+  --shadow-elevated: 0 12px 32px -8px rgba(0,0,0,0.6);
+
+  /* Animations */
+  --animate-fade-in: fade-in 0.5s ease-out;
+  --animate-slide-down: slide-down 0.6s ease-out;
+  --animate-slide-up: slide-up 0.6s ease-out;
+  --animate-pulse-soft: pulse-soft 1.2s ease-in-out infinite;
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+  }
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-6px); }
+  }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(6px); }
+  }
+  @keyframes pulse-soft {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
+}
+
+@layer base {
+  * { @apply m-0 p-0 box-border; }
+  ::selection { background: color-mix(in srgb, var(--color-midground) 25%, transparent); color: var(--color-foreground); }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--color-foreground);
+    line-height: 1.6;
+    min-height: 100vh;
+    background:
+      repeating-conic-gradient(rgba(94, 234, 212, 0.03) 0% 25%, transparent 0% 50%) 0 0 / 2px 2px,
+      var(--color-base);
+  }
+
+  a { color: var(--color-midground); transition: opacity 0.2s ease; }
+  a:hover { opacity: 0.8; }
+  code {
+    font-family: var(--font-mono);
+    background: color-mix(in srgb, var(--color-midground) 8%, var(--color-base));
+    padding: 1px 5px;
+    border-radius: var(--radius-xs);
+    font-size: 0.85em;
+  }
+  button { font-family: var(--font-sans); }
+  input, textarea, select { font-family: var(--font-sans); }
+}
+
+/* ── Custom Component Classes ────────────────────── */
+
+@layer components {
+  .arc-border {
+    --arc-angle: 160deg;
+    --arc-width: 1.25px;
+    --arc-inset: -2px;
+    --arc-duration: 2.23s;
+    --arc-gradient: linear-gradient(var(--arc-angle),
+      transparent 0%, var(--color-foreground) 15%, var(--color-midground) 20%, var(--color-base) 25%,
+      transparent 35%, transparent 40%, var(--color-foreground) 55%, var(--color-midground) 60%,
+      var(--color-base) 65%, transparent 75%, transparent 80%,
+      var(--color-foreground) 95%, var(--color-midground) 100%);
+    pointer-events: none;
+    z-index: -1;
+    border-radius: inherit;
+    inset: var(--arc-inset);
+    padding: var(--arc-width);
+    position: absolute;
+    overflow: hidden;
+    mask-image: linear-gradient(#000 0 0), linear-gradient(#000 0 0);
+    mask-clip: content-box, border-box;
+    mask-origin: content-box, border-box;
+    mask-composite: exclude;
+  }
+  .arc-border:before {
+    content: "";
+    border-radius: inherit;
+    background: var(--arc-gradient);
+    animation: gradient-stroke var(--arc-duration) linear infinite;
+    background-size: 300% 300%;
+    position: absolute;
+    inset: 0;
+  }
+
+  @keyframes gradient-stroke {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+
+  .bevel { box-shadow: var(--shadow-bevel); }
+  .bevel-strong { box-shadow: var(--shadow-bevel-strong); }
+  .dither {
+    background: repeating-conic-gradient(rgba(94, 234, 212, 0.03) 0% 25%, transparent 0% 50%) 0 0 / 2px 2px;
+  }
+}
+
+/* ── Stat Card ───────────────────────────────────── */
+.stat-number { @apply text-3xl font-extrabold leading-none tracking-tight; }
+.stat-label { @apply text-[0.65rem] font-semibold uppercase tracking-[0.05em] mt-1; }
+.stat-sub { @apply text-[0.6rem] mt-0.5 opacity-60; }
+
+/* ── Badge ───────────────────────────────────────── */
+.badge {
+  @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.62rem] font-bold uppercase tracking-[0.02em];
+}
+.badge-vulnerable { @apply bg-red-500/15 text-red-400; }
+.badge-resistant { @apply bg-emerald-500/15 text-emerald-400; }
+.badge-unclear { @apply bg-amber-500/15 text-amber-400; }
+.badge-error { @apply bg-gray-500/15 text-gray-400; }
+.badge-severity-extreme { @apply bg-red-500/15 text-red-400; }
+.badge-severity-eleve { @apply bg-orange-500/15 text-orange-400; }
+.badge-severity-moyen { @apply bg-amber-500/15 text-amber-400; }
+.badge-severity-faible { @apply bg-gray-500/15 text-gray-400; }
+.badge-done { @apply bg-emerald-500/15 text-emerald-400; }
+.badge-running { @apply bg-cyan-500/15 text-cyan-400; }
+.badge-pending { @apply bg-amber-500/15 text-amber-400; }
+.badge-rsk { @apply bg-cyan-500/15 text-cyan-400 text-[0.58rem] px-1 py-0.5; }
+
+/* ── Status Dot ──────────────────────────────────── */
+.status-dot { @apply inline-block w-2 h-2 rounded-full shrink-0; }
+.status-dot-done { @apply bg-emerald-400; }
+.status-dot-running { @apply bg-cyan-400 animate-pulse-soft; }
+.status-dot-pending { @apply bg-amber-400; }
+.status-dot-error { @apply bg-red-400; }
+
+/* ── Progress Bar ────────────────────────────────── */
+.progress-bar { @apply h-1.5 rounded-full overflow-hidden; background: color-mix(in srgb, var(--color-midground) 15%, var(--color-base)); }
+.progress-fill {
+  @apply h-full rounded-full transition-all duration-500 ease-out;
+  background: linear-gradient(90deg, var(--color-midground), color-mix(in srgb, var(--color-midground) 60%, var(--color-foreground)));
+}
+.progress-fill.done { background: linear-gradient(90deg, var(--color-success), color-mix(in srgb, var(--color-success) 60%, #fff)); }
+
+/* ── Prompt Box ──────────────────────────────────── */
+.prompt-box {
+  @apply rounded p-3 font-mono text-xs whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed;
+  background: var(--color-base);
+  border: 1px solid var(--color-border);
+}
+
+/* ── Scrollbar ───────────────────────────────────── */
+.scrollbar-thin { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--color-midground) 20%, transparent) transparent; }
+.scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ── Empty state ─────────────────────────────────── */
+.empty-state {
+  @apply text-center py-12 px-6 rounded-lg border border-dashed;
+  border-color: color-mix(in srgb, var(--color-midground) 15%, transparent);
+  color: var(--color-text-secondary);
+}
+
+/* ── Responsesive containers ─────────────────────── */
+.page-wrap { @apply max-w-5xl mx-auto px-4 sm:px-6; }

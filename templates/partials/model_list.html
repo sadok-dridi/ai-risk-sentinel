@@ -1,37 +1,42 @@
 <!-- models: {{ models|length }} -->
 {% if error %}
-<div class="card" style="border-color: var(--red);">
-  <p style="color: var(--red);">{{ error }}</p>
+<div class="rounded-lg p-4 mb-4" style="background: var(--color-card); border: 1px solid var(--color-destructive);">
+  <p style="color: var(--color-destructive);">{{ error }}</p>
 </div>
 {% endif %}
 
 {% if provider_groups %}
-<p style="color: var(--dim); font-size: 0.85rem; margin-bottom: 0.5rem;">
+<p class="text-xs mb-2" style="color: var(--color-text-secondary);">
   {{ model_count }} models found{% if cached_at %} · cached at {{ cached_at }}{% endif %}
 </p>
 {% for g in provider_groups %}
-<div class="provider-group">
-  <div class="provider-group-title">
-    <span class="status-dot {% if g.status == 'ok' %}done{% else %}error{% endif %}"></span>
+<div class="rounded-lg mb-3 overflow-hidden" style="background: var(--color-card); border: 1px solid var(--color-border);">
+  <div class="flex items-center gap-2 px-4 py-2.5 text-xs border-b" style="border-color: var(--color-border); background: color-mix(in srgb, var(--color-midground) 2%, var(--color-base));">
+    <span class="status-dot status-dot-{% if g.status == 'ok' %}done{% else %}error{% endif %}"></span>
     <strong>{{ g.provider.name }}</strong>
     {% if g.models %}
-    <span class="dim" style="font-size:0.75rem;">{{ g.models|length }} models</span>
+    <span class="opacity-60" style="font-size:0.7rem;">{{ g.models|length }} models</span>
     {% else %}
-    <span class="dim" style="font-size:0.75rem;color:var(--red);">Discovery failed{% if g.error %}: {{ g.error }}{% endif %}</span>
+    <span class="opacity-60" style="font-size:0.7rem; color: var(--color-destructive);">Discovery failed{% if g.error %}: {{ g.error }}{% endif %}</span>
     {% endif %}
   </div>
   {% if g.models %}
-  <table>
+  <table class="w-full text-xs">
     <thead>
-      <tr><th>Model ID</th><th>Owned By</th><th>Context</th><th>Capabilities</th></tr>
+      <tr class="border-b" style="border-color: var(--color-border);">
+        <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Model ID</th>
+        <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Owned By</th>
+        <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Context</th>
+        <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Capabilities</th>
+      </tr>
     </thead>
     <tbody>
       {% for m in g.models %}
-      <tr>
-        <td><strong>{{ m.id }}</strong></td>
-        <td style="color: var(--dim);">{{ m.owned_by }}</td>
-        <td>{{ (m.context_window // 1000) if m.context_window else '—' }}K</td>
-        <td style="color: var(--dim); font-size: 0.75rem;">{{ m.capabilities|join(', ') if m.capabilities else '—' }}</td>
+      <tr class="border-b last:border-b-0" style="border-color: var(--color-border);">
+        <td class="py-2 px-4"><strong>{{ m.id }}</strong></td>
+        <td class="py-2 px-4 opacity-60">{{ m.owned_by }}</td>
+        <td class="py-2 px-4">{{ (m.context_window // 1000) if m.context_window else '—' }}K</td>
+        <td class="py-2 px-4 opacity-60 text-[0.65rem]">{{ m.capabilities|join(', ') if m.capabilities else '—' }}</td>
       </tr>
       {% endfor %}
     </tbody>
@@ -41,28 +46,34 @@
 {% endfor %}
 
 {% elif models %}
-<p style="color: var(--dim); font-size: 0.85rem; margin-bottom: 0.5rem;">
+<p class="text-xs mb-2" style="color: var(--color-text-secondary);">
   {{ models|length }} models found{% if cached_at %} · cached at {{ cached_at }}{% endif %}
 </p>
-<table>
+<table class="w-full text-xs rounded-lg overflow-hidden" style="background: var(--color-card); border: 1px solid var(--color-border);">
   <thead>
-    <tr><th>Model ID</th><th>Provider</th><th>Owned By</th><th>Context</th><th>Capabilities</th></tr>
+    <tr class="border-b" style="border-color: var(--color-border);">
+      <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Model ID</th>
+      <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Provider</th>
+      <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Owned By</th>
+      <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Context</th>
+      <th class="py-2 px-4 text-left font-semibold opacity-60 uppercase tracking-wider">Capabilities</th>
+    </tr>
   </thead>
   <tbody>
     {% for m in models %}
-    <tr>
-      <td><strong>{{ m.id }}</strong></td>
-      <td>{{ m.provider }}</td>
-      <td style="color: var(--dim);">{{ m.owned_by }}</td>
-      <td>{{ (m.context_window // 1000) if m.context_window else '—' }}K</td>
-      <td style="color: var(--dim); font-size: 0.75rem;">{{ m.capabilities|join(', ') if m.capabilities else '—' }}</td>
+    <tr class="border-b last:border-b-0" style="border-color: var(--color-border);">
+      <td class="py-2 px-4"><strong>{{ m.id }}</strong></td>
+      <td class="py-2 px-4">{{ m.provider }}</td>
+      <td class="py-2 px-4 opacity-60">{{ m.owned_by }}</td>
+      <td class="py-2 px-4">{{ (m.context_window // 1000) if m.context_window else '—' }}K</td>
+      <td class="py-2 px-4 opacity-60 text-[0.65rem]">{{ m.capabilities|join(', ') if m.capabilities else '—' }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 {% else %}
-<div class="empty">
-  <div class="icon">&#128270;</div>
-  <p>No models discovered yet. Add a provider in <a href="/settings">Settings</a>, then click "Discover Models".</p>
+<div class="empty-state">
+  <div class="text-2xl mb-2 opacity-50">&#128270;</div>
+  <p class="text-xs">No models discovered yet. Add a provider in <a href="/settings">Settings</a>, then click "Discover Models".</p>
 </div>
 {% endif %}

@@ -2,66 +2,66 @@
 {% block title %}Results — AI Risk Sentinel{% endblock %}
 {% block content %}
 
-<h1>Run Results</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-4">Run Results</h1>
 
 {% set pct_vuln = 0 %}
 {% if run.total_tests > 0 %}
   {% set pct_vuln = (run.vulnerable_count / run.completed_tests * 100)|round(1) if run.completed_tests > 0 else 0 %}
 {% endif %}
 
-<div class="card" style="margin-bottom: 1rem;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-    <div>
+<div class="rounded-lg p-5 mb-4" style="background: var(--color-card); border: 1px solid var(--color-border);">
+  <div class="flex items-center justify-between flex-wrap gap-3 mb-4">
+    <div class="flex items-center gap-3 text-xs">
       <code>{{ run.id }}</code>
-      <span class="status-dot {{ run.status }}"></span>{{ run.status }}
-      <span style="color: var(--dim); margin-left: 1rem;">{{ run.created_at[:16] }}</span>
+      <span class="status-dot status-dot-{{ run.status }}"></span><span>{{ run.status }}</span>
+      <span class="opacity-60">{{ run.created_at[:16] }}</span>
     </div>
-    <div>
-      <a href="/report/{{ run.id }}" class="btn green">Download Report</a>
-      <a href="/policy/all" class="btn">Policy Docs</a>
-      <a href="/attacks" class="btn primary">New Run</a>
+    <div class="flex gap-2">
+      <a href="/report/{{ run.id }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium no-underline transition-all duration-200" style="border: 1px solid transparent; background: var(--color-success); color: #000;">Download Report</a>
+      <a href="/policy/all" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium no-underline transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);">Policy Docs</a>
+      <a href="/attacks" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium no-underline transition-all duration-200" style="border: 1px solid transparent; color: #fff; background: linear-gradient(135deg, var(--color-midground), color-mix(in srgb, var(--color-midground) 70%, #000));">New Run</a>
     </div>
   </div>
 
-  <div class="stat-grid" style="margin-top: 1rem;">
-    <div class="stat-card">
-      <div class="number dim">{{ run.total_tests }}</div>
-      <div class="label">Total Tests</div>
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+    <div class="rounded-lg p-4 text-center" style="background: var(--color-base); border: 1px solid var(--color-border);">
+      <div class="stat-number" style="color: var(--color-text-secondary);">{{ run.total_tests }}</div>
+      <div class="stat-label">Total Tests</div>
     </div>
-    <div class="stat-card">
-      <div class="number red">{{ run.vulnerable_count }}</div>
-      <div class="label">Vulnerable</div>
+    <div class="rounded-lg p-4 text-center" style="background: var(--color-base); border: 1px solid var(--color-border);">
+      <div class="stat-number" style="color: var(--color-destructive);">{{ run.vulnerable_count }}</div>
+      <div class="stat-label">Vulnerable</div>
     </div>
-    <div class="stat-card">
-      <div class="number green">{{ run.resistant_count }}</div>
-      <div class="label">Resistant</div>
+    <div class="rounded-lg p-4 text-center" style="background: var(--color-base); border: 1px solid var(--color-border);">
+      <div class="stat-number" style="color: var(--color-success);">{{ run.resistant_count }}</div>
+      <div class="stat-label">Resistant</div>
     </div>
-    <div class="stat-card">
-      <div class="number dim">{{ run.error_count }}</div>
-      <div class="label">Errors</div>
+    <div class="rounded-lg p-4 text-center" style="background: var(--color-base); border: 1px solid var(--color-border);">
+      <div class="stat-number" style="color: var(--color-text-secondary);">{{ run.error_count }}</div>
+      <div class="stat-label">Errors</div>
     </div>
   </div>
 </div>
 
 <!-- Matrix -->
-<h2>Risk Matrix</h2>
-<div class="matrix-wrap card">
-  <table>
+<h2 class="text-sm font-semibold mb-3">Risk Matrix</h2>
+<div class="overflow-x-auto rounded-lg" style="background: var(--color-card); border: 1px solid var(--color-border);">
+  <table class="w-full text-[0.65rem]">
     <thead>
-      <tr>
-        <th>Model</th>
+      <tr class="border-b" style="border-color: var(--color-border);">
+        <th class="py-2 px-3 text-left font-semibold opacity-60 uppercase tracking-wider sticky left-0" style="background: var(--color-card); z-index: 2;">Model</th>
         {% for a in attacks %}
-        <th>{{ a[:12] }}</th>
+        <th class="py-2 px-2 text-center font-semibold opacity-60 uppercase tracking-wider whitespace-nowrap">{{ a[:12] }}</th>
         {% endfor %}
       </tr>
     </thead>
     <tbody>
       {% for model in models %}
-      <tr>
-        <td>{{ model[:28] }}</td>
+      <tr class="border-b last:border-b-0" style="border-color: var(--color-border);">
+        <td class="py-2 px-3 font-semibold sticky left-0" style="background: var(--color-card); z-index: 1;">{{ model[:28] }}</td>
         {% for attack in attacks %}
         {% set v = lookup.get((model, attack), "error") %}
-        <td class="{{ v }}">
+        <td class="py-2 px-2 text-center font-bold text-[0.6rem] {% if v == 'vulnerable' %}text-red-400 bg-red-500/10{% elif v == 'resistant' %}text-emerald-400 bg-emerald-500/10{% elif v == 'unclear' %}text-amber-400 bg-amber-500/10{% else %}text-gray-400 bg-gray-500/5{% endif %}">
           {% if v == "vulnerable" %}VULN
           {% elif v == "resistant" %}RES
           {% elif v == "unclear" %}UNC
@@ -75,54 +75,54 @@
 </div>
 
 <!-- Filters -->
-<h2>Detailed Results ({{ results|length }})</h2>
-<div class="filter-bar">
-  <span class="btn sm" onclick="filterResults('all')">All</span>
-  <span class="btn sm" onclick="filterResults('vulnerable')" style="color:var(--red);">Vuln</span>
-  <span class="btn sm" onclick="filterResults('resistant')" style="color:var(--green);">Res</span>
-  <span class="btn sm" onclick="filterResults('error')" style="color:var(--dim);">Err</span>
+<h2 class="text-sm font-semibold mt-5 mb-3">Detailed Results ({{ results|length }})</h2>
+<div class="flex gap-1.5 mb-3 flex-wrap">
+  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);" onclick="filterResults('all')">All</span>
+  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-destructive); background: var(--color-card); box-shadow: var(--shadow-bevel);" onclick="filterResults('vulnerable')">Vuln</span>
+  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-success); background: var(--color-card); box-shadow: var(--shadow-bevel);" onclick="filterResults('resistant')">Res</span>
+  <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[0.65rem] font-medium cursor-pointer transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-text-secondary); background: var(--color-card); box-shadow: var(--shadow-bevel);" onclick="filterResults('error')">Err</span>
 </div>
 
-<div id="results-container">
+<div id="results-container" class="flex flex-col gap-3">
   {% for r in results %}
-  <div class="result-card result-{{ r.verdict }}">
-    <div class="header">
-      <div>
+  <div class="rounded-lg p-4 result-{{ r.verdict }}" style="background: var(--color-card); border: 1px solid var(--color-border);">
+    <div class="flex items-start justify-between flex-wrap gap-2 mb-2">
+      <div class="flex items-center gap-2 text-xs flex-wrap">
         <strong>{{ r.model_id }}</strong>
-        <span style="color: var(--dim); margin: 0 0.5rem;">←</span>
+        <span class="opacity-60">←</span>
         <strong>{{ r.attack_id }}</strong>
-        <span style="color: var(--dim); font-size: 0.75rem; margin-left: 0.5rem;">{{ r.rsk_id }}</span>
+        <span class="opacity-60 text-[0.65rem]">{{ r.rsk_id }}</span>
       </div>
-      <div style="display:flex;align-items:center;gap:0.5rem;">
+      <div class="flex items-center gap-1.5">
         {% if r.judge_verdict %}
-        <span style="font-size:0.7rem;color:var(--dim);">Judge:</span>
-        <span class="badge {{ r.judge_verdict }}">{{ r.judge_verdict.upper() }}</span>
+        <span class="text-[0.6rem] opacity-60">Judge:</span>
+        <span class="badge badge-{{ r.judge_verdict }}">{{ r.judge_verdict.upper() }}</span>
         {% endif %}
-        <span class="badge {{ r.verdict }}">{{ r.verdict.upper() }}</span>
+        <span class="badge badge-{{ r.verdict }}">{{ r.verdict.upper() }}</span>
       </div>
     </div>
 
     {% if r.judge_reason %}
-    <p style="font-size:0.75rem;color:var(--yellow);margin:0.3rem 0;padding:0.3rem 0.5rem;background:rgba(210,153,29,0.08);border-radius:4px;">
+    <p class="text-[0.65rem] mb-2 px-2 py-1 rounded" style="color: var(--color-warning); background: color-mix(in srgb, var(--color-warning) 10%, transparent);">
       Judge: {{ r.judge_reason }}
     </p>
     {% endif %}
 
     {% if r.prompt %}
-    <h4 style="margin:0.5rem 0 0.2rem;font-size:0.8rem;color:var(--dim);">Prompt</h4>
-    <div class="prompt-box">{{ r.prompt[:300] }}</div>
+    <h4 class="text-[0.65rem] mb-1 opacity-60">Prompt</h4>
+    <div class="prompt-box mb-2">{{ r.prompt[:300] }}</div>
     {% endif %}
 
     {% if r.response %}
-    <h4 style="margin:0.5rem 0 0.2rem;font-size:0.8rem;color:var(--dim);">Response</h4>
+    <h4 class="text-[0.65rem] mb-1 opacity-60">Response</h4>
     <div class="prompt-box">{{ r.response[:600] }}</div>
     {% endif %}
 
     {% if r.error_message %}
-    <p style="color: var(--red); font-size: 0.8rem;">{{ r.error_message[:200] }}</p>
+    <p class="text-xs" style="color: var(--color-destructive);">{{ r.error_message[:200] }}</p>
     {% endif %}
 
-    <p style="font-size:0.75rem;color:var(--dim);margin-top:0.4rem;">
+    <p class="text-[0.65rem] mt-2 opacity-60">
       {{ "%.0f"|format(r.elapsed_ms) }}ms ·
       indicators: {{ r.matched_indicators|join(', ') if r.matched_indicators else '—' }}
     </p>
@@ -132,7 +132,7 @@
 
 <script>
 function filterResults(type) {
-  document.querySelectorAll('.result-card').forEach(function(card) {
+  document.querySelectorAll('#results-container > div').forEach(function(card) {
     if (type === 'all' || card.classList.contains('result-' + type)) {
       card.style.display = '';
     } else {

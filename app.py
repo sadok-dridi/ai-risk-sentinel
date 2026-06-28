@@ -538,32 +538,32 @@ def _render_provider_list() -> HTMLResponse:
 
         model_badge = ""
         if p.get("model_count", 0) > 0:
-            model_badge = f'<span class="badge resistant" style="font-size:0.7rem;">{p["model_count"]} models</span>'
+            model_badge = f'<span class="badge badge-resistant" style="font-size:0.6rem;">{p["model_count"]} models</span>'
 
         masked_key = p["api_key"][:12] + "..." if len(p.get("api_key","")) > 12 else p.get("api_key","")
         html += f'''
-        <div class="provider-card" id="prov-{p["id"]}">
-          <div class="provider-header">
-            <div>
-              <span class="status-dot {status_dot}" title="{status_label}"></span>
-              <strong>{p["name"]}</strong>
+        <div class="rounded-lg p-4 mb-2" id="prov-{p["id"]}" style="background: var(--color-card); border: 1px solid var(--color-border);">
+          <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="status-dot status-dot-{status_dot}" title="{status_label}"></span>
+              <strong class="text-sm">{p["name"]}</strong>
               {model_badge}
             </div>
-            <div style="display:flex;gap:0.4rem;">
-              <button class="btn sm" hx-get="/settings/provider/{p["id"]}/form" hx-target="#prov-{p["id"]}" hx-swap="outerHTML">Edit</button>
-              <button class="btn sm red" hx-delete="/settings/provider/{p["id"]}" hx-target="#prov-{p["id"]}" hx-swap="outerHTML">Delete</button>
+            <div class="flex gap-1.5">
+              <button class="inline-flex items-center gap-1 px-2 py-1 rounded text-[0.65rem] font-medium transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);" hx-get="/settings/provider/{p["id"]}/form" hx-target="#prov-{p["id"]}" hx-swap="outerHTML">Edit</button>
+              <button class="inline-flex items-center gap-1 px-2 py-1 rounded text-[0.65rem] font-medium transition-all duration-200" style="border: 1px solid var(--color-destructive); color: var(--color-destructive); background: transparent;" hx-delete="/settings/provider/{p["id"]}" hx-target="#prov-{p["id"]}" hx-swap="outerHTML">Delete</button>
             </div>
           </div>
-          <table style="font-size:0.8rem;">
-            <tr><td style="width:80px;color:var(--dim);">URL:</td><td><code>{p["base_url"]}</code></td></tr>
-            <tr><td style="color:var(--dim);">Key:</td><td><code>{masked_key}</code></td></tr>
-            <tr><td style="color:var(--dim);">Type:</td><td><code>{p["provider_type"]}</code></td></tr>
-            <tr><td style="color:var(--dim);">Status:</td><td><span style="color:var(--{"green" if status_dot == "done" else "red" if status_dot == "error" else "yellow"});">{status_label}</span></td></tr>
+          <table class="w-full text-[0.7rem]">
+            <tr><td class="py-1 pr-3 opacity-60 w-16">URL:</td><td><code>{p["base_url"]}</code></td></tr>
+            <tr><td class="py-1 pr-3 opacity-60">Key:</td><td><code>{masked_key}</code></td></tr>
+            <tr><td class="py-1 pr-3 opacity-60">Type:</td><td><code>{p["provider_type"]}</code></td></tr>
+            <tr><td class="py-1 pr-3 opacity-60">Status:</td><td><span style="color: var(--color-{"success" if status_dot == "done" else "destructive" if status_dot == "error" else "warning"});">{status_label}</span></td></tr>
           </table>
-          <div style="margin-top:0.6rem; display:flex; gap:0.5rem; align-items:center;">
-            <button class="btn sm" hx-post="/settings/provider/{p["id"]}/test" hx-target="#test-result-{p["id"]}" hx-indicator="#test-spinner-{p["id"]}">Test &amp; Discover</button>
-            <span id="test-spinner-{p["id"]}" class="htmx-indicator dim">Connecting...</span>
-            <span id="test-result-{p["id"]}" style="font-size:0.8rem;"></span>
+          <div class="flex items-center gap-2 mt-3">
+            <button class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[0.65rem] font-medium transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);" hx-post="/settings/provider/{p["id"]}/test" hx-target="#test-result-{p["id"]}" hx-indicator="#test-spinner-{p["id"]}">Test &amp; Discover</button>
+            <span id="test-spinner-{p["id"]}" class="htmx-indicator text-xs" style="color: var(--color-text-secondary);">Connecting...</span>
+            <span id="test-result-{p["id"]}" class="text-xs"></span>
           </div>
         </div>'''
     html += '</div>'

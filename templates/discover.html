@@ -2,25 +2,26 @@
 {% block title %}Models — AI Risk Sentinel{% endblock %}
 {% block content %}
 
-<div class="page-header">
+<div class="flex items-start justify-between gap-4 mb-6">
   <div>
-    <h1>Model Discovery</h1>
-    <p class="page-desc">
+    <h1 class="text-2xl font-bold tracking-tight">Model Discovery</h1>
+    <p class="text-sm mt-0.5" style="color: var(--color-text-secondary);">
       Queries configured API endpoints to discover available models.
       {% if cached_at %}
       Last discovered: <strong>{{ cached_at }}</strong>.
       {% endif %}
     </p>
   </div>
-  <div class="header-actions">
-    <button class="btn primary"
+  <div class="flex items-center gap-2 shrink-0">
+    <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all duration-200 cursor-pointer" style="border: 1px solid transparent; color: #fff; box-shadow: 0 2px 8px color-mix(in srgb, var(--color-midground) 25%, transparent); background: linear-gradient(135deg, var(--color-midground), color-mix(in srgb, var(--color-midground) 70%, #000));"
             hx-post="/discover"
             hx-target="#model-list"
             hx-indicator="#discover-spinner">
       Discover Models
     </button>
-    <span id="discover-spinner" class="htmx-indicator dim" style="align-self:center;">
-      <span class="spinner"></span> Querying APIs...
+    <span id="discover-spinner" class="htmx-indicator text-xs flex items-center gap-1" style="color: var(--color-text-secondary);">
+      <span class="inline-block w-3 h-3 rounded-full animate-spin" style="border: 2px solid var(--color-border); border-top-color: var(--color-midground);"></span>
+      Querying APIs...
     </span>
   </div>
 </div>

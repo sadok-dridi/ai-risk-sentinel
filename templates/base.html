@@ -1,45 +1,144 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="bg-[var(--color-base)] text-[var(--color-foreground)]">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}AI Risk Sentinel{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
   <script src="/static/htmx.min.js"></script>
   {% block head %}{% endblock %}
+  <style>
+    /* Custom Sidebar Scrollbar */
+    .sidebar-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .sidebar-scroll::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 4px;
+    }
+
+    .main-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .main-scroll::-webkit-scrollbar-thumb {
+      background: var(--color-border);
+      border-radius: 4px;
+    }
+
+    /* Hermes Background Image */
+    #hermes-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+      background-image: url('/static/hermes-bg.webp');
+      background-size: cover;
+      background-position: top;
+      background-repeat: no-repeat;
+      opacity: 0.15;
+      filter: brightness(0.6);
+    }
+  </style>
 </head>
-<body>
-  <header>
-    <div class="logo">
-      <span class="logo-icon">&#9762;</span>
-      <span>AI Risk Sentinel</span>
+
+<body class="h-screen w-screen overflow-hidden flex font-sans bg-black">
+  <div id="hermes-bg"></div>
+
+  <!-- Sidebar -->
+  <aside class="w-[260px] flex-shrink-0 flex flex-col border-r h-full bg-transparent backdrop-blur-xl"
+    style="border-color: var(--color-border);">
+    <div class="p-5 flex justify-between items-center border-b" style="border-color: var(--color-border);">
+      <div class="flex flex-col">
+        <a href="/" class="font-bold text-[15px] tracking-widest no-underline flex items-center gap-2"
+          style="color: var(--color-foreground); font-family: 'Space Mono', monospace;">
+          <span>&#9762;</span> AI RISK SENTINEL
+        </a>
+        <span class="text-[10px] mt-1 tracking-wider uppercase opacity-60">ISO 42001 Platform</span>
+      </div>
     </div>
-    <nav>
-      <a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>
-        <span class="nav-icon">&#9632;</span> Dashboard
-      </a>
-      <a href="/discover" {% if request.url.path == "/discover" %}class="active"{% endif %}>
-        <span class="nav-icon">&#9733;</span> Models
-      </a>
-      <a href="/attacks" {% if request.url.path == "/attacks" %}class="active"{% endif %}>
-        <span class="nav-icon">&#9889;</span> Attacks
-      </a>
-      <a href="/history" {% if request.url.path == "/history" %}class="active"{% endif %}>
-        <span class="nav-icon">&#9776;</span> History
-      </a>
-      <a href="/settings" {% if request.url.path == "/settings" %}class="active"{% endif %}>
-        <span class="nav-icon">&#9881;</span> Settings
-      </a>
+
+    <nav class="flex-1 overflow-y-auto py-3 sidebar-scroll">
+      <ul class="flex flex-col gap-0.5 px-2">
+        {% set nav_items = [
+        ("/", "&#9632;", "DASHBOARD"),
+        ("/discover", "&#9733;", "MODELS"),
+        ("/attacks", "&#9889;", "ATTACK RUNS"),
+        ("/history", "&#9776;", "HISTORY"),
+        ("/settings", "&#9881;", "SETTINGS"),
+        ] %}
+        {% for href, icon, label in nav_items %}
+        <li>
+          <a href="{{ href }}"
+            class="flex items-center gap-3 px-4 py-2.5 rounded text-[11px] font-medium no-underline transition-all duration-200 tracking-wider uppercase
+                    {% if request.url.path == href %}text-[var(--color-foreground)] bg-[color-mix(in_srgb,var(--color-midground)_15%,transparent)] border-l-2 border-[var(--color-midground)]{% else %}text-[var(--color-text-secondary)] hover:text-[var(--color-foreground)] hover:bg-[color-mix(in_srgb,var(--color-midground)_5%,transparent)]{% endif %}">
+            <span class="text-xs opacity-80 w-4 text-center">{{ icon|safe }}</span>
+            {{ label }}
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
     </nav>
-  </header>
 
-  <main>
-    {% block content %}{% endblock %}
-  </main>
+    <div class="border-t pt-4 flex flex-col" style="border-color: var(--color-border);">
+      <div class="px-5 mb-2">
+        <span class="block text-[9px] uppercase tracking-widest opacity-50 mb-2">System Status</span>
+        <div class="flex justify-between items-center text-[10px] mb-1.5 opacity-80">
+          <span>Verdict Engine:</span>
+          <span class="text-[var(--color-midground)] font-mono">ONLINE</span>
+        </div>
+        <div class="flex justify-between items-center text-[10px] opacity-80">
+          <span>Active Tasks:</span>
+          <span class="font-mono">0</span>
+        </div>
+      </div>
 
-  <footer>
-    <span class="footer-legal">AI Risk Sentinel · ISO 42001 §8.2 · TeamWill Groupe</span>
-    <span class="footer-ver">v3.1</span>
-  </footer>
+      <div class="mt-2 border-t border-b py-3 px-5" style="border-color: var(--color-border);">
+        <div class="flex items-center gap-2 text-[11px] text-[var(--color-text-secondary)]">
+          <span class="text-[var(--color-warning)]">&#9888;</span> TEAMWILL GROUPE
+        </div>
+      </div>
+
+      <div class="p-4 flex justify-between text-[10px] font-mono opacity-50">
+        <span>v3.1.0</span>
+        <span>ISO 42001 §8.2</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="flex-1 flex flex-col h-full bg-transparent">
+    <!-- Top Header Placeholder (optional, keeping it minimal like Hermes) -->
+    <header class="h-[72px] flex items-center justify-between px-8 border-b shrink-0 bg-transparent backdrop-blur-xl"
+      style="border-color: var(--color-border);">
+      <div class="flex items-center gap-3">
+        <span class="text-xl text-[var(--color-midground)] opacity-80">{% block header_icon %}&#9632;{% endblock
+          %}</span>
+        <h1 class="text-lg font-bold tracking-widest uppercase" style="font-family: 'Space Mono', monospace;">{% block
+          header_title %}Overview{% endblock %}</h1>
+      </div>
+      <div class="flex items-center gap-4">
+        {% block header_actions %}{% endblock %}
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-8 main-scroll">
+      <div class="max-w-6xl mx-auto">
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+
 </body>
+
 </html>

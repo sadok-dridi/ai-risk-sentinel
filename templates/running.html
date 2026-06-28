@@ -1,15 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Running — AI Risk Sentinel{% endblock %}
 {% block head %}
-<!-- HTMX SSE extension -->
 <script>
-  // Simple SSE-based live updates (no extra extension needed)
   document.addEventListener('DOMContentLoaded', function() {
     var runId = '{{ run.id }}';
     var feed = document.getElementById('run-feed');
     var progressFill = document.getElementById('progress-fill');
     var progressText = document.getElementById('progress-text');
-    var statusLabel = document.getElementById('status-label');
     var vulnCount = document.getElementById('vuln-count');
     var resCount = document.getElementById('res-count');
     var errCount = document.getElementById('err-count');
@@ -22,13 +19,13 @@
       var data = JSON.parse(e.data);
       count++;
 
-      var cls = 'entry err';
-      if (data.verdict === 'vulnerable') { cls = 'entry vuln'; vuln++; }
-      else if (data.verdict === 'resistant') { cls = 'entry safe'; resist++; }
+      var cls = 'entry-err';
+      if (data.verdict === 'vulnerable') { cls = 'entry-vuln'; vuln++; }
+      else if (data.verdict === 'resistant') { cls = 'entry-safe'; resist++; }
       else { errs++; }
 
       var line = document.createElement('div');
-      line.className = cls;
+      line.className = 'px-2 py-0.5 rounded ' + cls;
       line.textContent = '[' + data.verdict.toUpperCase().slice(0,4) + '] ' +
                          data.model_id + ' ← ' + data.attack_id;
       feed.appendChild(line);
@@ -46,63 +43,68 @@
       var data = JSON.parse(e.data);
       progressFill.classList.add('done');
       progressFill.style.width = '100%';
-      statusLabel.innerHTML = '<span class="status-dot done"></span> Completed';
+      document.getElementById('status-badge').className = 'status-dot status-dot-done';
+      document.getElementById('status-text').textContent = 'Completed';
       progressText.textContent = '{{ run.total_tests }} / {{ run.total_tests }} (100%)';
-
-      // Show results link
       document.getElementById('post-run').innerHTML =
-        '<a href="/results/' + data.run_id + '" class="btn primary">View Results</a> ' +
-        '<a href="/report/' + data.run_id + '" class="btn">Download Report</a>';
-
+        '<a href="/results/' + data.run_id + '" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium no-underline transition-all duration-200" style="border: 1px solid transparent; color: #fff; background: linear-gradient(135deg, var(--color-midground), color-mix(in srgb, var(--color-midground) 70%, #000));">View Results</a> ' +
+        '<a href="/report/' + data.run_id + '" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium no-underline transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);">Download Report</a>';
       evtSource.close();
     });
 
     evtSource.addEventListener('error', function(e) {
       try {
         var data = JSON.parse(e.data);
-        feed.innerHTML += '<div class="entry err">ERROR: ' + data.message + '</div>';
+        feed.innerHTML += '<div class="px-2 py-0.5 rounded entry-err">ERROR: ' + data.message + '</div>';
       } catch(_) {}
-      statusLabel.innerHTML = '<span class="status-dot error"></span> Failed';
+      document.getElementById('status-badge').className = 'status-dot status-dot-error';
+      document.getElementById('status-text').textContent = 'Failed';
       evtSource.close();
     });
   });
 </script>
+<style>
+  .entry-vuln { color: var(--color-destructive); }
+  .entry-safe { color: var(--color-success); }
+  .entry-err { color: var(--color-text-secondary); }
+</style>
 {% endblock %}
 
 {% block content %}
 
-<h1>Attack Run in Progress</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-4">Attack Run in Progress</h1>
 
-<div class="card">
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <div>
-      <span id="status-label"><span class="status-dot running"></span> Running</span>
-      <code style="margin-left: 1rem; font-size: 0.8rem;">{{ run.id }}</code>
+<div class="rounded-lg p-5 mb-4" style="background: var(--color-card); border: 1px solid var(--color-border);">
+  <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2 text-xs">
+      <span id="status-badge" class="status-dot status-dot-running"></span>
+      <span id="status-text">Running</span>
+      <code style="margin-left: 0.5rem;">{{ run.id }}</code>
     </div>
-    <div id="post-run"></div>
+    <div id="post-run" class="flex gap-2"></div>
   </div>
 
   {% include "partials/progress.html" %}
 </div>
 
-<div class="stat-grid" style="margin: 1rem 0;">
-  <div class="stat-card">
-    <div class="number red" id="vuln-count">0</div>
-    <div class="label">Vulnerable</div>
+<div class="grid grid-cols-3 gap-3 mb-4">
+  <div class="rounded-lg p-4 text-center" style="background: var(--color-card); border: 1px solid var(--color-border);">
+    <div class="stat-number" id="vuln-count" style="color: var(--color-destructive);">0</div>
+    <div class="stat-label">Vulnerable</div>
   </div>
-  <div class="stat-card">
-    <div class="number green" id="res-count">0</div>
-    <div class="label">Resistant</div>
+  <div class="rounded-lg p-4 text-center" style="background: var(--color-card); border: 1px solid var(--color-border);">
+    <div class="stat-number" id="res-count" style="color: var(--color-success);">0</div>
+    <div class="stat-label">Resistant</div>
   </div>
-  <div class="stat-card">
-    <div class="number dim" id="err-count">0</div>
-    <div class="label">Errors</div>
+  <div class="rounded-lg p-4 text-center" style="background: var(--color-card); border: 1px solid var(--color-border);">
+    <div class="stat-number" id="err-count" style="color: var(--color-text-secondary);">0</div>
+    <div class="stat-label">Errors</div>
   </div>
 </div>
 
-<h2>Live Feed</h2>
-<div class="run-feed" id="run-feed">
-  <div class="entry dim">Waiting for results...</div>
+<h2 class="text-sm font-semibold mb-3">Live Feed</h2>
+<div id="run-feed" class="max-h-80 overflow-y-auto rounded-lg p-3 font-mono text-[0.65rem] leading-relaxed scrollbar-thin" style="background: var(--color-base); border: 1px solid var(--color-border);">
+  <div class="opacity-60 px-2 py-0.5">Waiting for results...</div>
 </div>
 
 {% endblock %}

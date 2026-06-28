@@ -2,30 +2,40 @@
 {% block title %}History — AI Risk Sentinel{% endblock %}
 {% block content %}
 
-<h1>Run History</h1>
+<h1 class="text-2xl font-bold tracking-tight mb-5">Run History</h1>
 
 {% if runs %}
-<table>
+<table class="w-full text-xs rounded-lg overflow-hidden" style="background: var(--color-card); border: 1px solid var(--color-border);">
   <thead>
-    <tr><th>ID</th><th>Client</th><th>Status</th><th>Tests</th><th>Vuln</th><th>Res</th><th>Err</th><th>Date</th><th></th></tr>
+    <tr class="border-b" style="border-color: var(--color-border);">
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider">ID</th>
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider">Client</th>
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider">Status</th>
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider">Tests</th>
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider">Vuln</th>
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider">Res</th>
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider">Err</th>
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider">Date</th>
+      <th class="py-2.5 px-3 text-left font-semibold opacity-60 uppercase tracking-wider"></th>
+    </tr>
   </thead>
   <tbody>
     {% for r in runs %}
-    <tr>
-      <td><code>{{ r.id }}</code></td>
-      <td>{{ r.client }}</td>
-      <td><span class="status-dot {{ r.status }}"></span>{{ r.status }}</td>
-      <td>{{ r.completed_tests }}/{{ r.total_tests }}</td>
-      <td><span class="badge vulnerable">{{ r.vulnerable_count }}</span></td>
-      <td><span class="badge resistant">{{ r.resistant_count }}</span></td>
-      <td><span class="badge error">{{ r.error_count }}</span></td>
-      <td style="color:var(--dim);font-size:0.8rem;">{{ r.created_at[:16] }}</td>
-      <td>
+    <tr class="border-b last:border-b-0" style="border-color: var(--color-border);">
+      <td class="py-2 px-3"><code>{{ r.id }}</code></td>
+      <td class="py-2 px-3">{{ r.client }}</td>
+      <td class="py-2 px-3"><span class="status-dot status-dot-{{ r.status }}"></span><span class="ml-1">{{ r.status }}</span></td>
+      <td class="py-2 px-3">{{ r.completed_tests }}/{{ r.total_tests }}</td>
+      <td class="py-2 px-3"><span class="badge badge-vulnerable">{{ r.vulnerable_count }}</span></td>
+      <td class="py-2 px-3"><span class="badge badge-resistant">{{ r.resistant_count }}</span></td>
+      <td class="py-2 px-3"><span class="badge badge-error">{{ r.error_count }}</span></td>
+      <td class="py-2 px-3 opacity-60">{{ r.created_at[:16] }}</td>
+      <td class="py-2 px-3">
         {% if r.status == "done" %}
-        <a href="/results/{{ r.id }}" class="btn sm">Results</a>
-        <a href="/report/{{ r.id }}" class="btn sm">Report</a>
+        <a href="/results/{{ r.id }}" class="inline-flex items-center gap-1 px-2 py-1 rounded text-[0.6rem] font-medium no-underline transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);">Results</a>
+        <a href="/report/{{ r.id }}" class="inline-flex items-center gap-1 px-2 py-1 rounded text-[0.6rem] font-medium no-underline transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);">Report</a>
         {% elif r.status == "running" %}
-        <a href="/run/{{ r.id }}" class="btn sm primary">Live</a>
+        <a href="/run/{{ r.id }}" class="inline-flex items-center gap-1 px-2 py-1 rounded text-[0.6rem] font-medium no-underline transition-all duration-200" style="border: 1px solid transparent; color: #fff; background: linear-gradient(135deg, var(--color-midground), color-mix(in srgb, var(--color-midground) 70%, #000));">Live</a>
         {% endif %}
       </td>
     </tr>
@@ -33,10 +43,10 @@
   </tbody>
 </table>
 {% else %}
-<div class="empty">
-  <div class="icon">&#128203;</div>
-  <p>No runs yet.</p>
-  <a href="/attacks" class="btn primary" style="margin-top:1rem;">Launch First Run</a>
+<div class="empty-state">
+  <div class="text-2xl mb-2 opacity-50">&#128203;</div>
+  <p class="text-xs mb-3">No runs yet.</p>
+  <a href="/attacks" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded text-xs font-medium no-underline cursor-pointer transition-all duration-200" style="border: 1px solid transparent; color: #fff; background: linear-gradient(135deg, var(--color-midground), color-mix(in srgb, var(--color-midground) 70%, #000));">Launch First Run</a>
 </div>
 {% endif %}
 

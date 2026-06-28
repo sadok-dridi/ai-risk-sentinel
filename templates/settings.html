@@ -2,123 +2,117 @@
 {% block title %}Settings — AI Risk Sentinel{% endblock %}
 {% block content %}
 
-<div class="page-header">
+<div class="flex items-start justify-between gap-4 mb-6">
   <div>
-    <h1>Settings</h1>
-    <p class="page-desc">Configure API providers and evaluation engine.</p>
+    <h1 class="text-2xl font-bold tracking-tight">Settings</h1>
+    <p class="text-sm mt-0.5" style="color: var(--color-text-secondary);">Configure API providers and evaluation engine.</p>
   </div>
 </div>
 
 <!-- Quick-add Preset Providers -->
-<div class="settings-section">
-  <h2>Quick Add Provider</h2>
-  <p class="dim" style="margin-bottom:0.8rem;">
-    Select a provider, enter your API key, and save. The provider will be tested and models discovered automatically.
-  </p>
+<div class="mb-6">
+  <h2 class="text-sm font-semibold mb-2">Quick Add Provider</h2>
+  <p class="text-xs mb-3" style="color: var(--color-text-secondary);">Select a provider, enter your API key, and save. The provider will be tested and models discovered automatically.</p>
 
-  <div class="preset-grid">
+  <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
     {% for preset in presets %}
-    <button class="preset-btn"
+    <button class="flex flex-col items-center gap-1.5 px-2 py-2.5 rounded text-xs cursor-pointer transition-all duration-200 hover:-translate-y-px" style="border: 1px solid var(--color-border); background: var(--color-card); color: var(--color-foreground); box-shadow: var(--shadow-bevel);"
             hx-get="/settings/provider/preset/{{ preset.id }}"
             hx-target="#preset-form-container"
             hx-swap="innerHTML"
             hx-indicator="#preset-spinner">
-      <span class="preset-icon">{{ preset.icon }}</span>
-      <span class="preset-name">{{ preset.name }}</span>
+      <span class="w-8 h-8 flex items-center justify-center rounded font-bold text-xs transition-all duration-200" style="background: var(--color-base); color: var(--color-midground); border: 1px solid var(--color-border);">{{ preset.icon }}</span>
+      <span class="font-medium text-[0.6rem] text-center leading-tight">{{ preset.name }}</span>
     </button>
     {% endfor %}
   </div>
-  <span id="preset-spinner" class="htmx-indicator dim" style="margin-top:0.5rem;display:inline-block;">Loading...</span>
+  <span id="preset-spinner" class="htmx-indicator text-xs mt-2 inline-block" style="color: var(--color-text-secondary);">Loading...</span>
 
-  <div id="preset-form-container" style="margin-top:0.8rem;"></div>
+  <div id="preset-form-container" class="mt-3"></div>
 </div>
 
 <!-- Provider Keys Section -->
-<div class="settings-section">
-  <h2>Configured Providers</h2>
-  <p class="dim" style="margin-bottom:1rem;">
-    Saved API providers. Each provider can be tested and models auto-discovered.
-  </p>
+<div class="mb-6">
+  <h2 class="text-sm font-semibold mb-2">Configured Providers</h2>
+  <p class="text-xs mb-3" style="color: var(--color-text-secondary);">Saved API providers. Each provider can be tested and models auto-discovered.</p>
 
   <div id="provider-list">
     {% for p in providers %}
     {% set status_dot = "pending" %}
     {% set status_label = "Not tested" %}
-    {% set status_color = "yellow" %}
     {% if p.test_status %}
       {% if p.test_status.startswith("ok") %}
         {% set status_dot = "done" %}
         {% set status_label = p.test_status %}
-        {% set status_color = "green" %}
       {% else %}
         {% set status_dot = "error" %}
         {% set status_label = p.test_status %}
-        {% set status_color = "red" %}
       {% endif %}
     {% endif %}
-    <div class="provider-card" id="prov-{{ p.id }}">
-      <div class="provider-header">
-        <div>
-          <span class="status-dot {{ status_dot }}" title="{{ status_label }}"></span>
-          <strong>{{ p.name }}</strong>
+    <div class="rounded-lg p-4 mb-2" id="prov-{{ p.id }}" style="background: var(--color-card); border: 1px solid var(--color-border);">
+      <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+        <div class="flex items-center gap-2">
+          <span class="status-dot status-dot-{{ status_dot }}" title="{{ status_label }}"></span>
+          <strong class="text-sm">{{ p.name }}</strong>
           {% if p.model_count > 0 %}
-          <span class="badge resistant" style="font-size:0.7rem;">{{ p.model_count }} models</span>
+          <span class="badge badge-resistant text-[0.6rem]">{{ p.model_count }} models</span>
           {% endif %}
         </div>
-        <div style="display:flex; gap:0.4rem;">
-          <button class="btn sm" hx-get="/settings/provider/{{ p.id }}/form" hx-target="#prov-{{ p.id }}" hx-swap="outerHTML">Edit</button>
-          <button class="btn sm red" hx-delete="/settings/provider/{{ p.id }}" hx-target="#prov-{{ p.id }}" hx-swap="outerHTML">Delete</button>
+        <div class="flex gap-1.5">
+          <button class="inline-flex items-center gap-1 px-2 py-1 rounded text-[0.65rem] font-medium transition-all duration-200 cursor-pointer" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);"
+                  hx-get="/settings/provider/{{ p.id }}/form" hx-target="#prov-{{ p.id }}" hx-swap="outerHTML">Edit</button>
+          <button class="inline-flex items-center gap-1 px-2 py-1 rounded text-[0.65rem] font-medium transition-all duration-200 cursor-pointer" style="border: 1px solid var(--color-destructive); color: var(--color-destructive); background: transparent;"
+                  hx-delete="/settings/provider/{{ p.id }}" hx-target="#prov-{{ p.id }}" hx-swap="outerHTML">Delete</button>
         </div>
       </div>
-      <table style="font-size:0.8rem;">
-        <tr><td style="width:80px;color:var(--dim);">URL:</td><td><code>{{ p.base_url }}</code></td></tr>
-        <tr><td style="color:var(--dim);">Key:</td><td><code>{{ p.api_key[:12] }}{% if p.api_key|length > 12 %}...{% endif %}</code></td></tr>
-        <tr><td style="color:var(--dim);">Type:</td><td><code>{{ p.provider_type }}</code></td></tr>
-        <tr><td style="color:var(--dim);">Status:</td><td><span style="color:var(--{{ status_color }});">{{ status_label }}</span></td></tr>
+      <table class="w-full text-[0.7rem]">
+        <tr><td class="py-1 pr-3 opacity-60 w-16">URL:</td><td><code>{{ p.base_url }}</code></td></tr>
+        <tr><td class="py-1 pr-3 opacity-60">Key:</td><td><code>{{ p.api_key[:12] }}{% if p.api_key|length > 12 %}...{% endif %}</code></td></tr>
+        <tr><td class="py-1 pr-3 opacity-60">Type:</td><td><code>{{ p.provider_type }}</code></td></tr>
+        <tr><td class="py-1 pr-3 opacity-60">Status:</td><td><span style="color: var(--color-{% if status_dot == 'done' %}success{% elif status_dot == 'error' %}destructive{% else %}warning{% endif %});">{{ status_label }}</span></td></tr>
       </table>
-      <div style="margin-top:0.6rem; display:flex; gap:0.5rem; align-items:center;">
-        <button class="btn sm" hx-post="/settings/provider/{{ p.id }}/test" hx-target="#test-result-{{ p.id }}" hx-indicator="#test-spinner-{{ p.id }}">
+      <div class="flex items-center gap-2 mt-3">
+        <button class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-[0.65rem] font-medium transition-all duration-200 cursor-pointer" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);"
+                hx-post="/settings/provider/{{ p.id }}/test" hx-target="#test-result-{{ p.id }}" hx-indicator="#test-spinner-{{ p.id }}">
           Test &amp; Discover
         </button>
-        <span id="test-spinner-{{ p.id }}" class="htmx-indicator dim">Connecting...</span>
-        <span id="test-result-{{ p.id }}" style="font-size:0.8rem;"></span>
+        <span id="test-spinner-{{ p.id }}" class="htmx-indicator text-xs" style="color: var(--color-text-secondary);">Connecting...</span>
+        <span id="test-result-{{ p.id }}" class="text-xs"></span>
       </div>
     </div>
     {% else %}
-    <div class="empty" style="padding:1.5rem;">
-      <p>No providers configured yet. Use the Quick Add buttons above to get started.</p>
+    <div class="empty-state p-6">
+      <p class="text-xs">No providers configured yet. Use the Quick Add buttons above to get started.</p>
     </div>
     {% endfor %}
   </div>
 </div>
 
 <!-- Verdict Engine Section -->
-<div class="settings-section">
-  <h2>Verdict Engine</h2>
-  <p class="dim" style="margin-bottom:1rem;">
-    Choose how responses are classified. The LLM judge uses deepseek-v4-flash-free for a second evaluation of each response.
-  </p>
+<div>
+  <h2 class="text-sm font-semibold mb-2">Verdict Engine</h2>
+  <p class="text-xs mb-3" style="color: var(--color-text-secondary);">Choose how responses are classified. The LLM judge uses deepseek-v4-flash-free for a second evaluation of each response.</p>
 
   <form hx-post="/settings/verdict-mode" hx-target="#verdict-saved" hx-swap="innerHTML">
-    <label class="toggle-option" style="margin-bottom:0.5rem;">
+    <label class="flex items-center gap-3 px-3 py-2.5 rounded text-xs cursor-pointer mb-2" style="border: 1px solid var(--color-border); background: var(--color-base);">
       <input type="radio" name="verdict_mode" value="keyword" {% if verdict_mode == "keyword" %}checked{% endif %}
-             onchange="this.form.requestSubmit()">
+             class="accent-[var(--color-midground)]" onchange="this.form.requestSubmit()">
       <div>
         <strong>Keyword matching</strong>
-        <p class="dim">Fast, free. Matches vulnerability/resistance indicator lists against the model's response.</p>
+        <p class="text-[0.6rem] mt-0.5 opacity-60">Fast, free. Matches vulnerability/resistance indicator lists against the model's response.</p>
       </div>
     </label>
 
-    <label class="toggle-option">
+    <label class="flex items-center gap-3 px-3 py-2.5 rounded text-xs cursor-pointer" style="border: 1px solid var(--color-border); background: var(--color-base);">
       <input type="radio" name="verdict_mode" value="llm_judge" {% if verdict_mode == "llm_judge" %}checked{% endif %}
-             onchange="this.form.requestSubmit()">
+             class="accent-[var(--color-midground)]" onchange="this.form.requestSubmit()">
       <div>
         <strong>LLM Judge</strong>
-        <span class="badge resistant" style="font-size:0.65rem;vertical-align:middle;">free</span>
-        <p class="dim">More accurate. Sends each response to deepseek-v4-flash-free for evaluation. Adds ~1s per test. Falls back to keyword on error.</p>
+        <span class="badge badge-resistant text-[0.55rem] align-middle">free</span>
+        <p class="text-[0.6rem] mt-0.5 opacity-60">More accurate. Sends each response to deepseek-v4-flash-free for evaluation. Adds ~1s per test. Falls back to keyword on error.</p>
       </div>
     </label>
-    <span id="verdict-saved" style="color:var(--green);font-size:0.8rem;display:block;margin-top:0.3rem;"></span>
+    <span id="verdict-saved" class="text-xs mt-1 block" style="color: var(--color-success);"></span>
   </form>
 </div>
 

@@ -4,7 +4,7 @@
        style="width: {% if run.total_tests > 0 %}{{ (run.completed_tests / run.total_tests * 100)|int }}{% else %}0{% endif %}%;">
   </div>
 </div>
-<p style="font-size: 0.8rem; color: var(--dim); margin-top: 0.3rem;" id="progress-text">
+<p class="text-xs mt-1 opacity-60" id="progress-text">
   {{ run.completed_tests }} / {{ run.total_tests }}
   {% if run.total_tests > 0 %}
   ({{ (run.completed_tests / run.total_tests * 100)|int }}%)
