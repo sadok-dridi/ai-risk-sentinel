@@ -24,9 +24,20 @@ def _conn():
         conn.close()
 
 
+SCHEMA_VERSION = 2
+
+
 def init_db():
     with _conn() as c:
         c.executescript("""
+            PRAGMA journal_mode=WAL;
+            PRAGMA foreign_keys=ON;
+
+            CREATE TABLE IF NOT EXISTS meta (
+                key TEXT PRIMARY KEY,
+                value TEXT NOT NULL DEFAULT ''
+            );
+
             CREATE TABLE IF NOT EXISTS runs (
                 id TEXT PRIMARY KEY,
                 client TEXT NOT NULL DEFAULT 'Neuraluna',
@@ -63,12 +74,14 @@ def init_db():
             CREATE INDEX IF NOT EXISTS idx_results_verdict ON run_results(verdict);
 
             CREATE TABLE IF NOT EXISTS discovered_models (
-                id TEXT PRIMARY KEY,
+                id TEXT NOT NULL,
+                provider_id INTEGER NOT NULL DEFAULT 0,
                 provider TEXT NOT NULL DEFAULT '',
                 owned_by TEXT NOT NULL DEFAULT '',
                 context_window INTEGER NOT NULL DEFAULT 0,
                 capabilities TEXT NOT NULL DEFAULT '[]',
-                discovered_at TEXT NOT NULL
+                discovered_at TEXT NOT NULL,
+                PRIMARY KEY (provider_id, id)
             );
 
             CREATE TABLE IF NOT EXISTS settings (
@@ -83,10 +96,43 @@ def init_db():
                 api_key TEXT NOT NULL DEFAULT '',
                 provider_type TEXT NOT NULL DEFAULT 'openai-compatible',
                 enabled INTEGER NOT NULL DEFAULT 1,
+                model_count INTEGER NOT NULL DEFAULT 0,
                 tested_at TEXT NOT NULL DEFAULT '',
                 test_status TEXT NOT NULL DEFAULT ''
             );
         """)
+
+        # Migration: add model_count if missing
+        try:
+            c.execute("ALTER TABLE provider_keys ADD COLUMN model_count INTEGER NOT NULL DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass  # already exists
+
+        # Migration: recreate discovered_models with provider_id PK
+        ver = c.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
+        if not ver or int(ver["value"]) < 2:
+            # Drop old table if it exists without provider_id PK
+            try:
+                c.execute("SELECT provider_id FROM discovered_models LIMIT 1")
+            except sqlite3.OperationalError:
+                # Old table, migrate
+                c.executescript("""
+                    ALTER TABLE discovered_models RENAME TO discovered_models_old;
+                    CREATE TABLE discovered_models (
+                        id TEXT NOT NULL,
+                        provider_id INTEGER NOT NULL DEFAULT 0,
+                        provider TEXT NOT NULL DEFAULT '',
+                        owned_by TEXT NOT NULL DEFAULT '',
+                        context_window INTEGER NOT NULL DEFAULT 0,
+                        capabilities TEXT NOT NULL DEFAULT '[]',
+                        discovered_at TEXT NOT NULL,
+                        PRIMARY KEY (provider_id, id)
+                    );
+                    INSERT OR IGNORE INTO discovered_models (id, provider_id, provider, owned_by, context_window, capabilities, discovered_at)
+                        SELECT id, 0, provider, owned_by, context_window, capabilities, discovered_at FROM discovered_models_old;
+                    DROP TABLE discovered_models_old;
+                """)
+            c.execute("INSERT OR REPLACE INTO meta (key, value) VALUES ('schema_version', '2')")
 
 
 # ── Runs ────────────────────────────────────────────────────────────────
@@ -193,21 +239,29 @@ def get_run_results_as_result_objects(run_id: str) -> list:
 
 # ── Models cache ─────────────────────────────────────────────────────────
 
-def save_models(models: list[dict]):
+def save_models(models: list[dict], provider_id: int = 0):
+    """Save discovered models. When provider_id > 0, only replaces that provider's cache."""
     now = time.strftime("%Y-%m-%dT%H:%M:%S")
     with _conn() as c:
-        c.execute("DELETE FROM discovered_models")
+        if provider_id > 0:
+            c.execute("DELETE FROM discovered_models WHERE provider_id = ?", (provider_id,))
+        else:
+            c.execute("DELETE FROM discovered_models")
         for m in models:
             c.execute(
-                "INSERT OR REPLACE INTO discovered_models (id, provider, owned_by, context_window, capabilities, discovered_at) VALUES (?, ?, ?, ?, ?, ?)",
-                (m["id"], m.get("provider", ""), m.get("owned_by", ""),
+                "INSERT OR REPLACE INTO discovered_models (id, provider_id, provider, owned_by, context_window, capabilities, discovered_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                (m["id"], provider_id, m.get("provider", ""), m.get("owned_by", ""),
                  m.get("context_window", 0), json.dumps(m.get("capabilities", [])), now),
             )
 
 
-def get_cached_models() -> list[dict]:
+def get_cached_models(provider_id: int = 0) -> list[dict]:
+    """Get cached models. provider_id=0 returns all models."""
     with _conn() as c:
-        rows = c.execute("SELECT * FROM discovered_models ORDER BY id").fetchall()
+        if provider_id > 0:
+            rows = c.execute("SELECT * FROM discovered_models WHERE provider_id = ? ORDER BY id", (provider_id,)).fetchall()
+        else:
+            rows = c.execute("SELECT * FROM discovered_models ORDER BY provider_id, id").fetchall()
     result = []
     for r in rows:
         d = dict(r)
@@ -216,9 +270,40 @@ def get_cached_models() -> list[dict]:
     return result
 
 
-def clear_model_cache():
+def get_models_grouped_by_provider() -> list[dict]:
+    """Return models grouped by provider_id for the wizard display."""
     with _conn() as c:
-        c.execute("DELETE FROM discovered_models")
+        rows = c.execute("""SELECT dm.*, pk.name as provider_name
+            FROM discovered_models dm
+            LEFT JOIN provider_keys pk ON dm.provider_id = pk.id
+            ORDER BY dm.provider_id, dm.id""").fetchall()
+    groups: dict[int, dict] = {}
+    for r in rows:
+        d = dict(r)
+        d["capabilities"] = json.loads(d.get("capabilities", "[]"))
+        pid = d["provider_id"]
+        if pid not in groups:
+            groups[pid] = {
+                "provider_id": pid,
+                "provider_name": d.get("provider_name") or d.get("provider", "unknown"),
+                "models": [],
+            }
+        groups[pid]["models"].append(d)
+    return list(groups.values())
+
+
+def get_model_count() -> int:
+    with _conn() as c:
+        row = c.execute("SELECT COUNT(*) as cnt FROM discovered_models").fetchone()
+    return row["cnt"] if row else 0
+
+
+def clear_model_cache(provider_id: int = 0):
+    with _conn() as c:
+        if provider_id > 0:
+            c.execute("DELETE FROM discovered_models WHERE provider_id = ?", (provider_id,))
+        else:
+            c.execute("DELETE FROM discovered_models")
 
 
 def get_cache_timestamp() -> str:
@@ -248,6 +333,12 @@ def get_provider_keys() -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def get_provider_key(provider_id: int) -> dict | None:
+    with _conn() as c:
+        row = c.execute("SELECT * FROM provider_keys WHERE id = ?", (provider_id,)).fetchone()
+    return dict(row) if row else None
+
+
 def save_provider_key(data: dict) -> int:
     with _conn() as c:
         if data.get("id"):
@@ -269,15 +360,30 @@ def save_provider_key(data: dict) -> int:
 def delete_provider_key(provider_id: int):
     with _conn() as c:
         c.execute("DELETE FROM provider_keys WHERE id = ?", (provider_id,))
+        c.execute("DELETE FROM discovered_models WHERE provider_id = ?", (provider_id,))
 
 
 def update_provider_test(provider_id: int, status: str, model_count: int = 0):
     now = time.strftime("%Y-%m-%dT%H:%M:%S")
     with _conn() as c:
         c.execute(
-            "UPDATE provider_keys SET tested_at = ?, test_status = ? WHERE id = ?",
-            (now, f"{status}:{model_count} models" if status == "ok" else status, provider_id),
+            "UPDATE provider_keys SET tested_at = ?, test_status = ?, model_count = ? WHERE id = ?",
+            (now, f"{status}:{model_count} models" if status == "ok" else status, model_count, provider_id),
         )
+
+
+def get_provider_models_grouped() -> list:
+    """Return models grouped by provider for the wizard."""
+    providers = get_provider_keys()
+    result = []
+    for p in providers:
+        models = get_cached_models(provider_id=p["id"])
+        if models:
+            result.append({
+                "provider": p,
+                "models": models,
+            })
+    return result
 
 
 # ── Init on import ───────────────────────────────────────────────────────

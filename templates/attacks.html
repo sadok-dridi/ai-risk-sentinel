@@ -2,6 +2,13 @@
 {% block title %}Attacks — AI Risk Sentinel{% endblock %}
 {% block content %}
 
+<div class="page-header">
+  <div>
+    <h1>Attack Wizard</h1>
+    <p class="page-desc">Select models and attack scenarios, then run the assessment.</p>
+  </div>
+</div>
+
 <div class="wizard">
   <div class="wizard-header">
     <div class="wizard-step active" data-step="1">
@@ -33,6 +40,33 @@
 
         {% if models %}
         <p class="dim">{{ model_count }} models available</p>
+
+        {% if provider_groups %}
+        {% for group in provider_groups %}
+        <div class="provider-group">
+          <div class="provider-group-title">
+            <span class="status-dot done"></span>
+            <strong>{{ group.provider.name }}</strong>
+            <span class="dim" style="font-size:0.75rem;">{{ group.models|length }} models</span>
+          </div>
+          <div class="provider-group-models">
+            {% for m in group.models %}
+            <label class="model-card {% if m.working %}working{% endif %}">
+              <input type="checkbox" class="model-cb" value="{{ m.id }}" onchange="updateJson()">
+              <div class="model-card-body">
+                <span class="model-name">{{ m.id }}</span>
+                <span class="model-owner">{{ m.owned_by }}</span>
+              </div>
+              {% if m.context_window %}
+              <span class="model-ctx" title="Context window">{{ (m.context_window // 1000) }}K</span>
+              {% endif %}
+              <span class="status-dot {% if m.working %}done{% else %}pending{% endif %}" title="{% if m.working %}Working{% else %}Cached{% endif %}"></span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        {% else %}
         <div class="model-grid">
           {% for m in models %}
           <label class="model-card {% if m.working %}working{% endif %}">
@@ -45,6 +79,8 @@
           </label>
           {% endfor %}
         </div>
+        {% endif %}
+
         {% else %}
         <div class="empty">
           <div class="icon">&#128270;</div>

@@ -2,23 +2,46 @@
 {% block title %}Settings — AI Risk Sentinel{% endblock %}
 {% block content %}
 
-<h1>Settings</h1>
+<div class="page-header">
+  <div>
+    <h1>Settings</h1>
+    <p class="page-desc">Configure API providers and evaluation engine.</p>
+  </div>
+</div>
 
 <!-- Provider Keys Section -->
 <div class="settings-section">
   <h2>API Providers</h2>
-  <p class="dim" style="margin-bottom:1rem;">Configure API endpoints and keys. Providers are auto-loaded on startup.</p>
+  <p class="dim" style="margin-bottom:1rem;">
+    Add API endpoints for LLM providers. Each provider is queried for its available models during discovery.
+  </p>
 
   <div id="provider-list">
     {% for p in providers %}
     <div class="provider-card" id="prov-{{ p.id }}">
       <div class="provider-header">
-        <strong>{{ p.name }}</strong>
-        <div style="display:flex; gap:0.4rem;">
+        <div>
+          {% set status_dot = "pending" %}
+          {% set status_label = "Not tested" %}
+          {% set status_color = "yellow" %}
           {% if p.test_status %}
-          <span class="status-dot {% if p.test_status.startswith('ok') %}done{% else %}error{% endif %}" title="{{ p.test_status }}"></span>
-          <span style="font-size:0.75rem;color:var(--dim);">{{ p.test_status }}</span>
+            {% if p.test_status.startswith("ok") %}
+              {% set status_dot = "done" %}
+              {% set status_label = p.test_status %}
+              {% set status_color = "green" %}
+            {% else %}
+              {% set status_dot = "error" %}
+              {% set status_label = p.test_status %}
+              {% set status_color = "red" %}
+            {% endif %}
           {% endif %}
+          <span class="status-dot {{ status_dot }}" title="{{ status_label }}"></span>
+          <strong>{{ p.name }}</strong>
+          {% if p.model_count > 0 %}
+          <span class="badge resistant" style="font-size:0.7rem;">{{ p.model_count }} models</span>
+          {% endif %}
+        </div>
+        <div style="display:flex; gap:0.4rem;">
           <button class="btn sm" hx-get="/settings/provider/{{ p.id }}/form" hx-target="#prov-{{ p.id }}" hx-swap="outerHTML">Edit</button>
           <button class="btn sm red" hx-delete="/settings/provider/{{ p.id }}" hx-target="#prov-{{ p.id }}" hx-swap="outerHTML">Delete</button>
         </div>
@@ -26,13 +49,14 @@
       <table style="font-size:0.8rem;">
         <tr><td style="width:80px;color:var(--dim);">URL:</td><td><code>{{ p.base_url }}</code></td></tr>
         <tr><td style="color:var(--dim);">Key:</td><td><code>{{ p.api_key[:12] }}{% if p.api_key|length > 12 %}...{% endif %}</code></td></tr>
-        <tr><td style="color:var(--dim);">Type:</td><td>{{ p.provider_type }}</td></tr>
+        <tr><td style="color:var(--dim);">Type:</td><td><code>{{ p.provider_type }}</code></td></tr>
+        <tr><td style="color:var(--dim);">Status:</td><td><span style="color:var(--{{ status_color }});">{{ status_label }}</span></td></tr>
       </table>
-      <div style="margin-top:0.6rem;">
+      <div style="margin-top:0.6rem; display:flex; gap:0.5rem; align-items:center;">
         <button class="btn sm" hx-post="/settings/provider/{{ p.id }}/test" hx-target="#test-result-{{ p.id }}" hx-indicator="#test-spinner-{{ p.id }}">
-          Test Connection
+          Test &amp; Discover
         </button>
-        <span id="test-spinner-{{ p.id }}" class="htmx-indicator dim">Testing...</span>
+        <span id="test-spinner-{{ p.id }}" class="htmx-indicator dim">Connecting...</span>
         <span id="test-result-{{ p.id }}" style="font-size:0.8rem;"></span>
       </div>
     </div>

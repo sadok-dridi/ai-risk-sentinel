@@ -2,26 +2,27 @@
 {% block title %}Models — AI Risk Sentinel{% endblock %}
 {% block content %}
 
-<h1>Model Discovery</h1>
-<p style="color: var(--dim); margin-bottom: 1rem;">
-  Queries configured API endpoints from Settings to discover available models.
-  {% if cached_at %}
-  <br>Last discovered: <strong>{{ cached_at }}</strong>
-  {% else %}
-  <br>No models cached. Configure a provider in <a href="/settings">Settings</a> first, then click Discover.
-  {% endif %}
-</p>
-
-<div style="margin-bottom: 1rem;">
-  <button class="btn primary"
-          hx-post="/discover"
-          hx-target="#model-list"
-          hx-indicator="#discover-spinner">
-    Discover Models
-  </button>
-  <span id="discover-spinner" class="htmx-indicator" style="color: var(--dim); margin-left: 0.5rem;">
-    Querying APIs...
-  </span>
+<div class="page-header">
+  <div>
+    <h1>Model Discovery</h1>
+    <p class="page-desc">
+      Queries configured API endpoints to discover available models.
+      {% if cached_at %}
+      Last discovered: <strong>{{ cached_at }}</strong>.
+      {% endif %}
+    </p>
+  </div>
+  <div class="header-actions">
+    <button class="btn primary"
+            hx-post="/discover"
+            hx-target="#model-list"
+            hx-indicator="#discover-spinner">
+      Discover Models
+    </button>
+    <span id="discover-spinner" class="htmx-indicator dim" style="align-self:center;">
+      <span class="spinner"></span> Querying APIs...
+    </span>
+  </div>
 </div>
 
 <div id="model-list">

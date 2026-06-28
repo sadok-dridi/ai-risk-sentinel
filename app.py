@@ -117,7 +117,12 @@ def _get_runner() -> AttackRunner:
 def dashboard(request: Request):
     runs = db.list_runs(limit=10)
     last_run = runs[0] if runs else None
-    return render(request, "index.html", last_run=last_run, runs=runs, len=len)
+    providers = db.get_provider_keys()
+    model_count = db.get_model_count()
+    ok_providers = sum(1 for p in providers if p.get("test_status", "").startswith("ok"))
+    return render(request, "index.html", last_run=last_run, runs=runs, len=len,
+                  providers=providers, model_count=model_count,
+                  provider_count=len(providers), ok_providers=ok_providers)
 
 
 @app.get("/discover", response_class=HTMLResponse)
@@ -129,30 +134,48 @@ def discover_page(request: Request):
 
 @app.post("/discover", response_class=HTMLResponse)
 def discover_action(request: Request):
-    # Build registry from DB provider keys (preferred) or fall back to config.yaml
     provider_keys = db.get_provider_keys()
 
-    if provider_keys:
-        # Build fresh registry from user-configured providers
-        config = _build_config_from_db(provider_keys)
-        registry = ModelRegistry.from_config(config)
-    else:
-        registry = _get_registry()
+    if not provider_keys:
+        return render(request, "partials/model_list.html", models=[], error="No providers configured. Add one in Settings first.", provider_groups=[])
 
     error_msg = ""
-    models_raw = []
-    try:
-        registry.discover_all(parallel=True)
-    except Exception as e:
-        error_msg = str(e)
-    else:
-        models_raw = [{"id": m.id, "provider": m.provider, "owned_by": m.owned_by,
-                       "context_window": m.context_window, "capabilities": m.capabilities}
-                      for m in sorted(registry.models.values(), key=lambda x: x.id)]
-        # Cache the results
-        db.save_models(models_raw)
+    total_models = 0
+    provider_groups = []
 
-    return render(request, "partials/model_list.html", models=models_raw, error=error_msg,
+    for pk in provider_keys:
+        if not pk.get("enabled", 1):
+            continue
+        config = _build_config_from_db([pk])
+        registry = ModelRegistry.from_config(config)
+        try:
+            registry.discover_all(parallel=False)
+            models_raw = [{"id": m.id, "provider": m.provider, "owned_by": m.owned_by,
+                           "context_window": m.context_window, "capabilities": m.capabilities}
+                          for m in sorted(registry.models.values(), key=lambda x: x.id)]
+            db.save_models(models_raw, provider_id=pk["id"])
+            db.update_provider_test(pk["id"], "ok", len(models_raw))
+            provider_groups.append({
+                "provider": pk,
+                "models": models_raw,
+                "status": "ok",
+            })
+            total_models += len(models_raw)
+        except Exception as e:
+            db.update_provider_test(pk["id"], "failed")
+            provider_groups.append({
+                "provider": pk,
+                "models": [],
+                "status": "error",
+                "error": str(e)[:80],
+            })
+            if not error_msg:
+                error_msg = str(e)
+
+    return render(request, "partials/model_list.html",
+                  models=[m for g in provider_groups for m in g["models"]],
+                  provider_groups=provider_groups,
+                  error=error_msg, model_count=total_models,
                   cached_at=db.get_cache_timestamp())
 
 
@@ -180,8 +203,15 @@ def attacks_page(request: Request):
     live_ids = set(registry.models.keys())
     for m in cached:
         m["working"] = m["id"] in live_ids
+    # Group models by provider
+    provider_groups = db.get_provider_models_grouped()
+    for g in provider_groups:
+        for m in g["models"]:
+            m["working"] = m["id"] in live_ids
     attacks = sorted(_attack_defs.values(), key=lambda a: a.attack_id)
-    return render(request, "attacks.html", models=cached, attacks=attacks,
+    return render(request, "attacks.html",
+                  models=cached, provider_groups=provider_groups,
+                  attacks=attacks,
                   model_count=len(cached), attack_count=len(attacks))
 
 
@@ -411,8 +441,8 @@ def provider_save(provider_id: str, request: Request,
     if provider_id != "new":
         data["id"] = int(provider_id)
     save_id = db.save_provider_key(data)
-    # Invalidate model cache — user changed provider config
-    db.clear_model_cache()
+    # Invalidate model cache for this provider
+    db.clear_model_cache(provider_id=save_id)
     return _render_provider_list()
 
 
@@ -425,8 +455,7 @@ def provider_delete(provider_id: int):
 @app.post("/settings/provider/{provider_id}/test", response_class=HTMLResponse)
 def provider_test(provider_id: int, request: Request):
     """Test a provider connection by calling /models endpoint."""
-    providers = db.get_provider_keys()
-    p = next((x for x in providers if x["id"] == provider_id), None)
+    p = db.get_provider_key(provider_id)
     if not p:
         return HTMLResponse("<span style='color:var(--red);'>Provider not found.</span>")
 
@@ -434,26 +463,23 @@ def provider_test(provider_id: int, request: Request):
     try:
         resp = httpx.get(f"{p['base_url']}/models",
                          headers={"Authorization": f"Bearer {p['api_key']}"},
-                         timeout=10)
+                         timeout=15)
         resp.raise_for_status()
         data = resp.json()
         model_count = len(data.get("data", data if isinstance(data, list) else []))
-        db.update_provider_test(provider_id, "ok", model_count)
-        # Clear cache — user will re-discover from this provider
-        db.clear_model_cache()
+
         # Auto-discover models from this provider
-        try:
-            config = _build_config_from_db([p])
-            registry = ModelRegistry.from_config(config)
-            registry.discover_all(parallel=False)
-            models_raw = [{"id": m.id, "provider": m.provider, "owned_by": m.owned_by,
-                           "context_window": m.context_window, "capabilities": m.capabilities}
-                          for m in sorted(registry.models.values(), key=lambda x: x.id)]
-            db.save_models(models_raw)
-        except Exception:
-            pass  # Discovery will happen on next /discover click
+        config = _build_config_from_db([p])
+        registry = ModelRegistry.from_config(config)
+        registry.discover_all(parallel=False)
+        models_raw = [{"id": m.id, "provider": m.provider, "owned_by": m.owned_by,
+                       "context_window": m.context_window, "capabilities": m.capabilities}
+                      for m in sorted(registry.models.values(), key=lambda x: x.id)]
+        db.save_models(models_raw, provider_id=provider_id)
+        db.update_provider_test(provider_id, "ok", len(models_raw))
+
         return HTMLResponse(
-            f"<span style='color:var(--green);'>✓ Connected — {model_count} models found</span>"
+            f"<span style='color:var(--green);'>✓ {len(models_raw)} models from {p['name']}</span>"
             f"<script>setTimeout(function(){{ location.reload(); }}, 800);</script>"
         )
     except Exception as e:
@@ -471,18 +497,31 @@ def _render_provider_list() -> HTMLResponse:
     """Render just the provider-list div for HTMX swaps."""
     providers = db.get_provider_keys()
     html = '<div id="provider-list">'
-    for p in providers:
-        test_info = ""
+    for i, p in enumerate(providers):
+        status_dot = "pending"
+        status_label = "Not tested"
         if p.get("test_status"):
-            dot = "done" if p["test_status"].startswith("ok") else "error"
-            test_info = f'<span class="status-dot {dot}" title="{p["test_status"]}"></span><span style="font-size:0.75rem;color:var(--dim);">{p["test_status"]}</span>'
+            if p["test_status"].startswith("ok"):
+                status_dot = "done"
+                status_label = p["test_status"]
+            else:
+                status_dot = "error"
+                status_label = p["test_status"]
+
+        model_badge = ""
+        if p.get("model_count", 0) > 0:
+            model_badge = f'<span class="badge resistant" style="font-size:0.7rem;">{p["model_count"]} models</span>'
+
         masked_key = p["api_key"][:12] + "..." if len(p.get("api_key","")) > 12 else p.get("api_key","")
         html += f'''
         <div class="provider-card" id="prov-{p["id"]}">
           <div class="provider-header">
-            <strong>{p["name"]}</strong>
+            <div>
+              <span class="status-dot {status_dot}" title="{status_label}"></span>
+              <strong>{p["name"]}</strong>
+              {model_badge}
+            </div>
             <div style="display:flex;gap:0.4rem;">
-              {test_info}
               <button class="btn sm" hx-get="/settings/provider/{p["id"]}/form" hx-target="#prov-{p["id"]}" hx-swap="outerHTML">Edit</button>
               <button class="btn sm red" hx-delete="/settings/provider/{p["id"]}" hx-target="#prov-{p["id"]}" hx-swap="outerHTML">Delete</button>
             </div>
@@ -490,11 +529,12 @@ def _render_provider_list() -> HTMLResponse:
           <table style="font-size:0.8rem;">
             <tr><td style="width:80px;color:var(--dim);">URL:</td><td><code>{p["base_url"]}</code></td></tr>
             <tr><td style="color:var(--dim);">Key:</td><td><code>{masked_key}</code></td></tr>
-            <tr><td style="color:var(--dim);">Type:</td><td>{p["provider_type"]}</td></tr>
+            <tr><td style="color:var(--dim);">Type:</td><td><code>{p["provider_type"]}</code></td></tr>
+            <tr><td style="color:var(--dim);">Status:</td><td><span style="color:var(--{"green" if status_dot == "done" else "red" if status_dot == "error" else "yellow"});">{status_label}</span></td></tr>
           </table>
-          <div style="margin-top:0.6rem;">
-            <button class="btn sm" hx-post="/settings/provider/{p["id"]}/test" hx-target="#test-result-{p["id"]}" hx-indicator="#test-spinner-{p["id"]}">Test Connection</button>
-            <span id="test-spinner-{p["id"]}" class="htmx-indicator dim">Testing...</span>
+          <div style="margin-top:0.6rem; display:flex; gap:0.5rem; align-items:center;">
+            <button class="btn sm" hx-post="/settings/provider/{p["id"]}/test" hx-target="#test-result-{p["id"]}" hx-indicator="#test-spinner-{p["id"]}">Test &amp; Discover</button>
+            <span id="test-spinner-{p["id"]}" class="htmx-indicator dim">Connecting...</span>
             <span id="test-result-{p["id"]}" style="font-size:0.8rem;"></span>
           </div>
         </div>'''

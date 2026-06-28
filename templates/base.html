@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,13 +10,26 @@
 </head>
 <body>
   <header>
-    <div class="logo fs-5 fw-bold">AI Risk Sentinel</div>
+    <div class="logo">
+      <span class="logo-icon">&#9762;</span>
+      <span>AI Risk Sentinel</span>
+    </div>
     <nav>
-      <a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>Dashboard</a>
-      <a href="/discover" {% if request.url.path == "/discover" %}class="active"{% endif %}>Models</a>
-      <a href="/attacks" {% if request.url.path == "/attacks" %}class="active"{% endif %}>Attacks</a>
-      <a href="/history" {% if request.url.path == "/history" %}class="active"{% endif %}>History</a>
-      <a href="/settings" {% if request.url.path == "/settings" %}class="active"{% endif %}>Settings</a>
+      <a href="/" {% if request.url.path == "/" %}class="active"{% endif %}>
+        <span class="nav-icon">&#9632;</span> Dashboard
+      </a>
+      <a href="/discover" {% if request.url.path == "/discover" %}class="active"{% endif %}>
+        <span class="nav-icon">&#9733;</span> Models
+      </a>
+      <a href="/attacks" {% if request.url.path == "/attacks" %}class="active"{% endif %}>
+        <span class="nav-icon">&#9889;</span> Attacks
+      </a>
+      <a href="/history" {% if request.url.path == "/history" %}class="active"{% endif %}>
+        <span class="nav-icon">&#9776;</span> History
+      </a>
+      <a href="/settings" {% if request.url.path == "/settings" %}class="active"{% endif %}>
+        <span class="nav-icon">&#9881;</span> Settings
+      </a>
     </nav>
   </header>
 
@@ -25,7 +38,8 @@
   </main>
 
   <footer>
-    AI Risk Sentinel v3.0 · ISO 42001 §8.2
+    <span class="footer-legal">AI Risk Sentinel · ISO 42001 §8.2 · TeamWill Groupe</span>
+    <span class="footer-ver">v3.1</span>
   </footer>
 </body>
 </html>

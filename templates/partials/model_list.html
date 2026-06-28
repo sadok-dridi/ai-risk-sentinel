@@ -1,14 +1,48 @@
 <!-- models: {{ models|length }} -->
 {% if error %}
 <div class="card" style="border-color: var(--red);">
-  <p style="color: var(--red);">Discovery error: {{ error }}</p>
+  <p style="color: var(--red);">{{ error }}</p>
 </div>
 {% endif %}
 
-{% if models %}
+{% if provider_groups %}
 <p style="color: var(--dim); font-size: 0.85rem; margin-bottom: 0.5rem;">
-  {{ models|length }} models found
-  {% if cached_at %}<span style="margin-left:1rem;">· cached at {{ cached_at }}</span>{% endif %}
+  {{ model_count }} models found{% if cached_at %} · cached at {{ cached_at }}{% endif %}
+</p>
+{% for g in provider_groups %}
+<div class="provider-group">
+  <div class="provider-group-title">
+    <span class="status-dot {% if g.status == 'ok' %}done{% else %}error{% endif %}"></span>
+    <strong>{{ g.provider.name }}</strong>
+    {% if g.models %}
+    <span class="dim" style="font-size:0.75rem;">{{ g.models|length }} models</span>
+    {% else %}
+    <span class="dim" style="font-size:0.75rem;color:var(--red);">Discovery failed{% if g.error %}: {{ g.error }}{% endif %}</span>
+    {% endif %}
+  </div>
+  {% if g.models %}
+  <table>
+    <thead>
+      <tr><th>Model ID</th><th>Owned By</th><th>Context</th><th>Capabilities</th></tr>
+    </thead>
+    <tbody>
+      {% for m in g.models %}
+      <tr>
+        <td><strong>{{ m.id }}</strong></td>
+        <td style="color: var(--dim);">{{ m.owned_by }}</td>
+        <td>{{ (m.context_window // 1000) if m.context_window else '—' }}K</td>
+        <td style="color: var(--dim); font-size: 0.75rem;">{{ m.capabilities|join(', ') if m.capabilities else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endfor %}
+
+{% elif models %}
+<p style="color: var(--dim); font-size: 0.85rem; margin-bottom: 0.5rem;">
+  {{ models|length }} models found{% if cached_at %} · cached at {{ cached_at }}{% endif %}
 </p>
 <table>
   <thead>
