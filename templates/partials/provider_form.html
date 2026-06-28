@@ -1,12 +1,12 @@
-<!-- Provider edit/new form (HTMX partial) -->
-<div class="provider-card" id="prov-{{ p.id if p else 'new' }}">
+<!-- Provider edit/new/preset form (HTMX partial) -->
+<div class="provider-card" id="prov-new">
   <div class="provider-header">
-    <strong>{% if p %}Edit Provider{% else %}New Provider{% endif %}</strong>
+    <strong>{% if is_preset %}Quick Add: {{ p.name }}{% elif p %}Edit Provider{% else %}New Provider{% endif %}</strong>
   </div>
 
-  <form hx-post="/settings/provider/{% if p %}{{ p.id }}{% else %}new{% endif %}"
+  <form hx-post="{{ form_action }}"
         hx-target="#provider-list" hx-swap="outerHTML">
-    <input type="hidden" name="provider_id" value="{{ p.id if p else '' }}">
+    <input type="hidden" name="provider_id" value="{{ p.id if p and not is_preset else '' }}">
 
     <div class="form-group">
       <label>Provider Name</label>
@@ -20,7 +20,8 @@
 
     <div class="form-group">
       <label>API Key</label>
-      <input type="password" name="api_key" value="{{ p.api_key if p else '' }}" placeholder="sk-...">
+      <input type="password" name="api_key" value="{{ p.api_key if p and not is_preset else '' }}" placeholder="sk-..." {% if is_preset %}autofocus{% endif %}>
+      {% if is_preset %}<p style="font-size:0.75rem;color:var(--dim);margin-top:0.2rem;">Enter your API key for {{ p.name }}. Already set.</p>{% endif %}
     </div>
 
     <div class="form-group">

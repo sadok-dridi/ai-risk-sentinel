@@ -32,6 +32,22 @@ from attacks import AttackRunner, AttackRunConfig, AttackDefinition, Verdict
 
 import db
 
+# ── Preset Providers — well-known LLM APIs, ready to go ─────────────────
+
+PRESET_PROVIDERS = [
+    {"id": "opencode-zen", "name": "OpenCode Zen", "base_url": "https://opencode.ai/zen/v1", "provider_type": "openai-compatible", "icon": "Z"},
+    {"id": "opencode-go", "name": "OpenCode Go", "base_url": "https://opencode.ai/zen/v1", "provider_type": "openai-compatible", "icon": "G"},
+    {"id": "openai", "name": "OpenAI", "base_url": "https://api.openai.com/v1", "provider_type": "openai-compatible", "icon": "O"},
+    {"id": "anthropic", "name": "Anthropic", "base_url": "https://api.anthropic.com/v1", "provider_type": "openai-compatible", "icon": "A"},
+    {"id": "deepseek", "name": "DeepSeek", "base_url": "https://api.deepseek.com/v1", "provider_type": "openai-compatible", "icon": "D"},
+    {"id": "openrouter", "name": "OpenRouter", "base_url": "https://openrouter.ai/api/v1", "provider_type": "openai-compatible", "icon": "R"},
+    {"id": "groq", "name": "Groq", "base_url": "https://api.groq.com/openai/v1", "provider_type": "openai-compatible", "icon": "G"},
+    {"id": "together", "name": "Together AI", "base_url": "https://api.together.xyz/v1", "provider_type": "openai-compatible", "icon": "T"},
+    {"id": "mistral", "name": "Mistral AI", "base_url": "https://api.mistral.ai/v1", "provider_type": "openai-compatible", "icon": "M"},
+    {"id": "fireworks", "name": "Fireworks AI", "base_url": "https://api.fireworks.ai/inference/v1", "provider_type": "openai-compatible", "icon": "F"},
+    {"id": "ollama", "name": "Ollama (Local)", "base_url": "http://localhost:11434/v1", "provider_type": "ollama", "icon": "L"},
+]
+
 # ── App setup ────────────────────────────────────────────────────────────
 
 app = FastAPI(title="AI Risk Sentinel", version="3.0")
@@ -412,12 +428,23 @@ def progress_partial(run_id: str, request: Request):
 def settings_page(request: Request):
     providers = db.get_provider_keys()
     verdict_mode = db.get_setting("verdict_mode", "keyword")
-    return render(request, "settings.html", providers=providers, verdict_mode=verdict_mode)
+    return render(request, "settings.html", providers=providers, verdict_mode=verdict_mode,
+                  presets=PRESET_PROVIDERS)
 
 
 @app.get("/settings/provider/new", response_class=HTMLResponse)
 def provider_new_form(request: Request):
-    return env.get_template("partials/provider_form.html").render(p=None)
+    return env.get_template("partials/provider_form.html").render(p=None, form_action="/settings/provider/new")
+
+
+@app.get("/settings/provider/preset/{preset_id}", response_class=HTMLResponse)
+def provider_preset_form(preset_id: str, request: Request):
+    """Load a provider form pre-filled with preset values."""
+    preset = next((p for p in PRESET_PROVIDERS if p["id"] == preset_id), None)
+    if not preset:
+        return HTMLResponse("<p style='color:var(--red);'>Unknown preset.</p>")
+    return env.get_template("partials/provider_form.html").render(
+        p=preset, form_action="/settings/provider/new", is_preset=True)
 
 
 @app.get("/settings/provider/{provider_id}/form", response_class=HTMLResponse)
@@ -426,7 +453,8 @@ def provider_edit_form(provider_id: int, request: Request):
     p = next((x for x in providers if x["id"] == provider_id), None)
     if not p:
         return HTMLResponse("<p>Provider not found.</p>", status_code=404)
-    return env.get_template("partials/provider_form.html").render(p=p)
+    return env.get_template("partials/provider_form.html").render(
+        p=p, form_action=f"/settings/provider/{provider_id}")
 
 
 @app.post("/settings/provider/{provider_id}", response_class=HTMLResponse)
