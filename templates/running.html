@@ -4,58 +4,188 @@
 <script>
   document.addEventListener('DOMContentLoaded', function() {
     var runId = '{{ run.id }}';
-    var feed = document.getElementById('run-feed');
+    var feed = document.getElementById('live-feed');
     var progressFill = document.getElementById('progress-fill');
     var progressText = document.getElementById('progress-text');
     var vulnCount = document.getElementById('vuln-count');
     var resCount = document.getElementById('res-count');
     var errCount = document.getElementById('err-count');
+    var totalTests = {{ run.total_tests or 1 }};
 
     var evtSource = new EventSource('/run/' + runId + '/stream');
     var count = 0;
     var vuln = 0, resist = 0, errs = 0;
+    var cards = {};
 
-    evtSource.addEventListener('result', function(e) {
-      var data = JSON.parse(e.data);
-      count++;
+    function cardId(data) {
+      return 'card-' + data.model_id.replace(/[^a-zA-Z0-9_-]/g, '_') + '-' + data.attack_id;
+    }
 
-      var cls = 'entry-err';
-      if (data.verdict === 'vulnerable') { cls = 'entry-vuln'; vuln++; }
-      else if (data.verdict === 'resistant') { cls = 'entry-safe'; resist++; }
-      else { errs++; }
-
-      var line = document.createElement('div');
-      line.className = 'px-2 py-0.5 rounded ' + cls;
-      line.textContent = '[' + data.verdict.toUpperCase().slice(0,4) + '] ' +
-                         data.model_id + ' ← ' + data.attack_id;
-      feed.appendChild(line);
-      feed.scrollTop = feed.scrollHeight;
-
-      var pct = Math.round(count / {{ run.total_tests or 1 }} * 100);
+    function updateProgress() {
+      var pct = Math.round(count / totalTests * 100);
       progressFill.style.width = pct + '%';
-      progressText.textContent = count + ' / {{ run.total_tests }} (' + pct + '%)';
+      progressText.textContent = count + ' / ' + totalTests + ' (' + pct + '%)';
       vulnCount.textContent = vuln;
       resCount.textContent = resist;
       errCount.textContent = errs;
+    }
+
+    function escapeHtml(text) {
+      var div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    evtSource.addEventListener('test_start', function(e) {
+      var data = JSON.parse(e.data);
+      var cid = cardId(data);
+      if (cards[cid]) return;
+
+      var card = document.createElement('div');
+      card.id = cid;
+      card.className = 'rounded-lg p-4 mb-3 test-card';
+      card.style = 'background: var(--color-card); border: 1px solid var(--color-border);';
+      card.innerHTML =
+        '<div class="flex items-center justify-between mb-2">' +
+          '<div class="flex items-center gap-2 text-xs">' +
+            '<span class="status-dot status-dot-running"></span>' +
+            '<strong>' + escapeHtml(data.model_id) + '</strong>' +
+            '<span class="opacity-60">&larr;</span>' +
+            '<strong>' + escapeHtml(data.attack_id) + '</strong>' +
+            '<span class="opacity-60 text-[0.6rem]">' + escapeHtml(data.rsk_id || '') + '</span>' +
+          '</div>' +
+          '<span class="text-[0.6rem] opacity-60 test-status">running...</span>' +
+        '</div>' +
+        '<div class="mb-2">' +
+          '<h5 class="text-[0.6rem] opacity-60 mb-1">Prompt</h5>' +
+          '<div class="prompt-box text-[0.65rem]">' + escapeHtml(data.prompt) + '</div>' +
+        '</div>' +
+        '<div class="response-section" style="display:none;">' +
+          '<h5 class="text-[0.6rem] opacity-60 mb-1">Response</h5>' +
+          '<div class="prompt-box text-[0.65rem]"></div>' +
+        '</div>' +
+        '<div class="judge-section" style="display:none;">' +
+          '<h5 class="text-[0.6rem] opacity-60 mb-1">LLM Judge <span class="judge-model-name text-[0.55rem]"></span></h5>' +
+          '<div class="judge-verdict text-[0.65rem] mb-1"></div>' +
+          '<div class="judge-reason text-[0.6rem] px-2 py-1 rounded" style="background: color-mix(in srgb, var(--color-midground) 8%, transparent); border-left: 2px solid var(--color-warning);"></div>' +
+        '</div>' +
+        '<div class="flex items-center gap-2 mt-2 test-footer text-[0.6rem] opacity-0">' +
+          '<span class="elapsed-ms"></span>' +
+          '<span class="verdict-badge"></span>' +
+        '</div>';
+
+      feed.prepend(card);
+      cards[cid] = card;
+    });
+
+    evtSource.addEventListener('response', function(e) {
+      var data = JSON.parse(e.data);
+      var cid = cardId(data);
+      var card = cards[cid];
+      if (!card) return;
+
+      var section = card.querySelector('.response-section');
+      section.style.display = '';
+      section.querySelector('.prompt-box').textContent = data.response;
+      card.querySelector('.elapsed-ms').textContent = (data.elapsed_ms / 1000).toFixed(1) + 's';
+    });
+
+    evtSource.addEventListener('classify', function(e) {
+      var data = JSON.parse(e.data);
+      var cid = cardId(data);
+      var card = cards[cid];
+      if (!card) return;
+
+      var statusEl = card.querySelector('.test-status');
+      statusEl.textContent = 'classified: ' + data.verdict;
+      if (data.indicators && data.indicators.length) {
+        statusEl.textContent += ' (' + data.indicators.length + ' indicators)';
+      }
+    });
+
+    evtSource.addEventListener('judge_start', function(e) {
+      var data = JSON.parse(e.data);
+      var cid = cardId(data);
+      var card = cards[cid];
+      if (!card) return;
+
+      var section = card.querySelector('.judge-section');
+      section.style.display = '';
+      card.querySelector('.judge-model-name').textContent = '(' + data.judge_model_id + ')';
+      card.querySelector('.test-status').textContent = 'judging...';
+    });
+
+    evtSource.addEventListener('judge_result', function(e) {
+      var data = JSON.parse(e.data);
+      var cid = cardId(data);
+      var card = cards[cid];
+      if (!card) return;
+
+      var jv = data.judge_verdict || 'unclear';
+      card.querySelector('.judge-verdict').innerHTML =
+        '<span class="badge badge-' + jv + '">JUDGE: ' + jv.toUpperCase() + '</span>';
+      card.querySelector('.judge-reason').textContent = data.judge_reason || '';
+    });
+
+    evtSource.addEventListener('test_done', function(e) {
+      var data = JSON.parse(e.data);
+      var cid = cardId(data);
+      var card = cards[cid];
+      if (!card) return;
+
+      count++;
+      var v = data.verdict;
+      if (v === 'vulnerable') { vuln++; }
+      else if (v === 'resistant') { resist++; }
+      else if (v === 'error') { errs++; }
+
+      var footer = card.querySelector('.test-footer');
+      footer.className = 'flex items-center gap-2 mt-2 test-footer text-[0.6rem]';
+      footer.querySelector('.elapsed-ms').textContent = (data.elapsed_ms / 1000).toFixed(1) + 's';
+      footer.querySelector('.verdict-badge').innerHTML =
+        '<span class="badge badge-' + v + '">' + v.toUpperCase() + '</span>';
+
+      card.querySelector('.test-status').textContent = v;
+      var dot = card.querySelector('.status-dot');
+      dot.className = 'status-dot status-dot-' + (v === 'vulnerable' ? 'error' : v === 'resistant' ? 'done' : 'pending');
+
+      updateProgress();
+    });
+
+    evtSource.addEventListener('result', function(e) {
+      var data = JSON.parse(e.data);
+      var cid = cardId(data);
+      var card = cards[cid];
+      if (!card) {
+        count++;
+        if (data.verdict === 'vulnerable') vuln++;
+        else if (data.verdict === 'resistant') resist++;
+        else errs++;
+        updateProgress();
+      }
     });
 
     evtSource.addEventListener('done', function(e) {
       var data = JSON.parse(e.data);
       progressFill.classList.add('done');
       progressFill.style.width = '100%';
+      progressText.textContent = totalTests + ' / ' + totalTests + ' (100%)';
       document.getElementById('status-badge').className = 'status-dot status-dot-done';
       document.getElementById('status-text').textContent = 'Completed';
-      progressText.textContent = '{{ run.total_tests }} / {{ run.total_tests }} (100%)';
       document.getElementById('post-run').innerHTML =
         '<a href="/results/' + data.run_id + '" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium no-underline transition-all duration-200" style="border: 1px solid transparent; color: #fff; background: linear-gradient(135deg, var(--color-midground), color-mix(in srgb, var(--color-midground) 70%, #000));">View Results</a> ' +
         '<a href="/report/' + data.run_id + '" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium no-underline transition-all duration-200" style="border: 1px solid var(--color-border); color: var(--color-foreground); background: var(--color-card); box-shadow: var(--shadow-bevel);">Download Report</a>';
+      // Mark any remaining cards as done
+      document.querySelectorAll('.test-card .status-dot.status-dot-running').forEach(function(d) {
+        d.className = 'status-dot status-dot-done';
+      });
       evtSource.close();
     });
 
     evtSource.addEventListener('error', function(e) {
       try {
         var data = JSON.parse(e.data);
-        feed.innerHTML += '<div class="px-2 py-0.5 rounded entry-err">ERROR: ' + data.message + '</div>';
+        feed.innerHTML += '<div class="rounded-lg p-3 mb-2 text-xs" style="background: color-mix(in srgb, var(--color-destructive) 10%, var(--color-card)); border: 1px solid var(--color-destructive);">ERROR: ' + escapeHtml(data.message) + '</div>';
       } catch(_) {}
       document.getElementById('status-badge').className = 'status-dot status-dot-error';
       document.getElementById('status-text').textContent = 'Failed';
@@ -64,9 +194,22 @@
   });
 </script>
 <style>
-  .entry-vuln { color: var(--color-destructive); }
-  .entry-safe { color: var(--color-success); }
-  .entry-err { color: var(--color-text-secondary); }
+  .test-card { transition: opacity 0.2s; }
+  .prompt-box {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    line-height: 1.5;
+    padding: 0.5rem 0.6rem;
+    border-radius: 0.35rem;
+    max-height: 120px;
+    overflow-y: auto;
+    word-break: break-word;
+    background: var(--color-base);
+    border: 1px solid var(--color-border);
+    white-space: pre-wrap;
+  }
+  .prompt-box::-webkit-scrollbar { width: 3px; }
+  .prompt-box::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
 </style>
 {% endblock %}
 
@@ -102,9 +245,9 @@
   </div>
 </div>
 
-<h2 class="text-sm font-semibold mb-3">Live Feed</h2>
-<div id="run-feed" class="max-h-80 overflow-y-auto rounded-lg p-3 font-mono text-[0.65rem] leading-relaxed scrollbar-thin" style="background: var(--color-base); border: 1px solid var(--color-border);">
-  <div class="opacity-60 px-2 py-0.5">Waiting for results...</div>
+<h2 class="text-sm font-semibold mb-3">Live Tests</h2>
+<div id="live-feed" class="flex flex-col">
+  <div class="empty-state p-6 text-xs" id="waiting-msg" style="color: var(--color-text-secondary);">Waiting for tests to start...</div>
 </div>
 
 {% endblock %}

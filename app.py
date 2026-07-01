@@ -225,9 +225,10 @@ def attacks_page(request: Request):
         for m in g["models"]:
             m["working"] = m["id"] in live_ids
     attacks = sorted(_attack_defs.values(), key=lambda a: a.attack_id)
+    judge_model = db.get_setting("judge_model", "")
     return render(request, "attacks.html",
                   models=cached, provider_groups=provider_groups,
-                  attacks=attacks,
+                  attacks=attacks, judge_model=judge_model,
                   model_count=len(cached), attack_count=len(attacks))
 
 
@@ -277,8 +278,26 @@ def start_run(
     if not model_ids or not attack_ids:
         return HTMLResponse("<p class='error'>Select at least one model and one attack.</p>")
 
-    runner = _get_runner()
     run_id = db.create_run(client)
+
+    # Build fresh runner from DB providers (not stale config.yaml)
+    provider_keys = db.get_provider_keys()
+    if not provider_keys:
+        db.update_run(run_id, status="error")
+        return HTMLResponse("<p class='error'>No providers configured. Add one in Settings first.</p>")
+
+    db_config = _build_config_from_db(provider_keys)
+    registry = ModelRegistry.from_config(db_config)
+    cached = db.get_cached_models()
+    by_provider: dict[str, list[dict]] = {}
+    for m in cached:
+        by_provider.setdefault(m["provider"], []).append(m)
+    for pname, models in by_provider.items():
+        registry.add_static_models(pname, models)
+    runner = AttackRunner(registry)
+    defs_path = _APP_DIR / "attacks" / "definitions.json"
+    if defs_path.exists():
+        runner.load_definitions(str(defs_path))
 
     config = AttackRunConfig(
         models=model_ids,
@@ -288,9 +307,11 @@ def start_run(
         timeout_per_attack=30,
         save_responses=False,
         judge_mode=(judge_mode == "true"),
+        judge_model=db.get_setting("judge_model", ""),
     )
     db.update_run(run_id, status="running", config_json=_json.dumps({
         "models": model_ids, "attacks": attack_ids, "client": client,
+        "judge_mode": (judge_mode == "true"),
     }))
 
     total = len(attack_ids) * len(model_ids) if "all" not in attack_ids else len(runner.definitions) * len(model_ids)
@@ -302,8 +323,11 @@ def start_run(
 
     # Fire background thread
     def _run():
+        def on_event(event_type: str, data: dict):
+            q.put({"event": event_type, "data": data})
+
         try:
-            results = runner.run(config)
+            results = runner.run(config, on_event=on_event)
             for r in results:
                 d = r.to_dict()
                 db.save_result(run_id, d)
@@ -428,7 +452,10 @@ def progress_partial(run_id: str, request: Request):
 def settings_page(request: Request):
     providers = db.get_provider_keys()
     verdict_mode = db.get_setting("verdict_mode", "keyword")
+    judge_model = db.get_setting("judge_model", "")
+    cached_models = db.get_cached_models()
     return render(request, "settings.html", providers=providers, verdict_mode=verdict_mode,
+                  judge_model=judge_model, cached_models=cached_models,
                   presets=PRESET_PROVIDERS)
 
 
@@ -519,6 +546,14 @@ def provider_test(provider_id: int, request: Request):
 def settings_verdict_mode(verdict_mode: str = Form(...)):
     db.set_setting("verdict_mode", verdict_mode)
     return HTMLResponse(f"<span style='color:var(--green);'>✓ Saved — {verdict_mode}</span>")
+
+
+@app.post("/settings/judge-model", response_class=HTMLResponse)
+def settings_judge_model(judge_model: str = Form(...)):
+    db.set_setting("judge_model", judge_model)
+    if judge_model:
+        return HTMLResponse(f"<span style='color:var(--green);'>✓ Judge model saved — {judge_model}</span>")
+    return HTMLResponse("<span style='color:var(--green);'>✓ Judge will use the same model as the attack</span>")
 
 
 def _render_provider_list() -> HTMLResponse:

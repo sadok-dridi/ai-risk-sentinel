@@ -91,7 +91,7 @@
 <!-- Verdict Engine Section -->
 <div>
   <h2 class="text-sm font-semibold mb-2">Verdict Engine</h2>
-  <p class="text-xs mb-3" style="color: var(--color-text-secondary);">Choose how responses are classified. The LLM judge uses deepseek-v4-flash-free for a second evaluation of each response.</p>
+  <p class="text-xs mb-3" style="color: var(--color-text-secondary);">Choose how responses are classified. The LLM judge sends each response to a separate model for evaluation.</p>
 
   <form hx-post="/settings/verdict-mode" hx-target="#verdict-saved" hx-swap="innerHTML">
     <label class="flex items-center gap-3 px-3 py-2.5 rounded text-xs cursor-pointer mb-2" style="border: 1px solid var(--color-border); background: var(--color-base);">
@@ -109,10 +109,30 @@
       <div>
         <strong>LLM Judge</strong>
         <span class="badge badge-resistant text-[0.55rem] align-middle">free</span>
-        <p class="text-[0.6rem] mt-0.5 opacity-60">More accurate. Sends each response to deepseek-v4-flash-free for evaluation. Adds ~1s per test. Falls back to keyword on error.</p>
+        <p class="text-[0.6rem] mt-0.5 opacity-60">Sends each response to a judge model for evaluation. Adds ~1-5s per test.</p>
       </div>
     </label>
     <span id="verdict-saved" class="text-xs mt-1 block" style="color: var(--color-success);"></span>
+  </form>
+</div>
+
+<!-- Judge Model Selection -->
+<div class="mt-6">
+  <h2 class="text-sm font-semibold mb-2">Judge Model</h2>
+  <p class="text-xs mb-3" style="color: var(--color-text-secondary);">Which model to use for LLM evaluation. Leave empty to use the same model being tested.</p>
+
+  <form hx-post="/settings/judge-model" hx-target="#judge-model-saved" hx-swap="innerHTML">
+    <select name="judge_model" class="w-full px-3 py-2 rounded text-xs font-mono mb-2" style="border: 1px solid var(--color-border); background: var(--color-base); color: var(--color-foreground);" onchange="this.form.requestSubmit()">
+      <option value="">— Same as tested model (auto) —</option>
+      {% set seen = [] %}
+      {% for m in cached_models %}
+        {% if m.id not in seen %}
+          {% set _ = seen.append(m.id) %}
+          <option value="{{ m.id }}" {% if judge_model == m.id %}selected{% endif %}>{{ m.id }} ({{ m.provider }})</option>
+        {% endif %}
+      {% endfor %}
+    </select>
+    <span id="judge-model-saved" class="text-xs mt-1 block" style="color: var(--color-success);"></span>
   </form>
 </div>
 

@@ -205,7 +205,17 @@ def get_run_results(run_id: str) -> list[dict]:
             "SELECT * FROM run_results WHERE run_id = ? ORDER BY attack_id, model_id",
             (run_id,),
         ).fetchall()
-    return [dict(r) for r in rows]
+    results = []
+    for r in rows:
+        d = dict(r)
+        # Parse JSON-encoded fields
+        if isinstance(d.get("matched_indicators"), str):
+            try:
+                d["matched_indicators"] = json.loads(d["matched_indicators"])
+            except (json.JSONDecodeError, TypeError):
+                d["matched_indicators"] = []
+        results.append(d)
+    return results
 
 
 def get_run_results_as_result_objects(run_id: str) -> list:

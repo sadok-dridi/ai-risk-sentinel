@@ -169,9 +169,9 @@
         <label class="flex items-center gap-2 px-3 py-2.5 rounded text-xs cursor-pointer mb-3" style="border: 1px solid var(--color-border); background: var(--color-base);">
           <input type="checkbox" id="judge-toggle" class="accent-[var(--color-midground)]" onchange="toggleJudge()">
           <div>
-            <span class="font-semibold">Use LLM Judge (deepseek-v4-flash-free)</span>
-            <span class="opacity-60 text-[0.6rem] ml-1">— more accurate, 1 extra API call per test</span>
-            <p class="text-[0.6rem] mt-0.5 opacity-60">When enabled, a second LLM evaluates whether the target model's response complied with the attack. Falls back to keyword matching on error.</p>
+            <span class="font-semibold">Use LLM Judge{% if judge_model %} ({{ judge_model }}){% endif %}</span>
+            <span class="opacity-60 text-[0.6rem] ml-1">— {% if judge_model %}1 extra API call per test{% else %}auto-selects model from Settings{% endif %}</span>
+            <p class="text-[0.6rem] mt-0.5 opacity-60">When enabled, a second LLM evaluates whether the target model's response complied with the attack. The judge model can be changed in <a href="/settings" class="underline" style="color: var(--color-midground);">Settings</a>.</p>
           </div>
         </label>
 
